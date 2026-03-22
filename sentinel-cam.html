@@ -298,19 +298,10 @@ function initPeer() {
   const pin = 'SNT-' + Math.floor(1000 + Math.random() * 9000);
 
   try {
-    S.peer = new Peer(pin, {
-      host: '0.peerjs.com', port: 443,
-      secure: true, path: '/',
-      debug: 1,
-      config: {
-        iceServers: [
-          { urls: 'stun:stun.l.google.com:19302' },
-          { urls: 'stun:stun1.l.google.com:19302' },
-        ]
-      }
-    });
+    S.peer = new Peer(pin);
   } catch(e) {
-    S.peer = new Peer(pin, { debug: 1 });
+    document.getElementById('myCamId').textContent = 'PeerJS load error';
+    return;
   }
 
   S.peer.on('open', id => {
@@ -318,25 +309,23 @@ function initPeer() {
     document.getElementById('myCamId').textContent = id;
     log(`Ready`, `Camera PIN: ${id}`);
   });
+
   S.peer.on('error', e => {
     if (e.type === 'unavailable-id') {
       S.peer.destroy();
       initPeer();
     } else {
-      log('Peer error', `${e.type}: ${e.message||''}`);
-      document.getElementById('myCamId').textContent = `Error: ${e.type}`;
+      log('Peer error', `${e.type}`);
+      document.getElementById('myCamId').textContent = `Error: ${e.type} — reload page`;
     }
   });
+
   S.peer.on('disconnected', () => {
     try { S.peer.reconnect(); } catch(x) {}
   });
 
-  // Viewer/TV called us — they want our stream
   S.peer.on('call', call => {
-    if (!S.stream) {
-      log('Viewer tried to connect — start camera first','');
-      call.close(); return;
-    }
+    if (!S.stream) { call.close(); return; }
     call.answer(S.stream);
     addViewer(call.peer);
     call.on('close', ()=>removeViewer(call.peer));
