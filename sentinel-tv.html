@@ -126,96 +126,170 @@ transform:translateZ(0);
 @keyframes ain{from{opacity:0;transform:translateY(-12px)}to{opacity:1;transform:none}}
 .abanner.show{display:block;}
 
-/* SETUP OVERLAY */
-.setup{position:fixed;inset:0;background:rgba(2,4,8,.97);display:flex;align-items:center;justify-content:center;z-index:200;}
+/* ═══ SETUP OVERLAY — CLEAN TV VERSION ═══ */
+.setup{
+position:fixed;inset:0;
+background:#000;
+display:flex;align-items:center;justify-content:center;
+z-index:200;
+}
 .setup.gone{display:none;}
-.setup-card{width:96vw;max-width:1100px;border:1px solid var(–border);border-radius:10px;background:var(–panel);padding:32px 40px;}
 
-.s-logo{font-family:var(–orb);font-size:28px;font-weight:900;letter-spacing:8px;color:#fff;text-align:center;text-shadow:0 0 40px rgba(0,212,255,.4);}
-.s-logo span{color:var(–accent);}
-.s-tag{font-size:8px;letter-spacing:5px;color:var(–dim);text-align:center;margin-bottom:20px;margin-top:3px;}
-
-/* TWO COLUMN LAYOUT */
-.s-cols{display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:start;}
-
-/* LEFT — TV ID (primary method) */
-.s-left{}
-.s-box-label{font-size:9px;letter-spacing:3px;color:var(–dim);margin-bottom:8px;text-transform:uppercase;}
-.s-tv-id-box{
-background:rgba(0,0,0,.6);border:2px solid var(–accent);
-border-radius:8px;padding:20px;text-align:center;margin-bottom:12px;
+.setup-card{
+width:90vw;max-width:960px;
+background:#0a1628;
+border:3px solid #00d4ff;
+border-radius:16px;
+padding:40px 48px;
+box-shadow:0 0 60px rgba(0,212,255,.3);
 }
-.s-step{
-font-size:11px;color:var(–text);line-height:1.9;
-background:rgba(0,0,0,.3);border:1px solid var(–border);
-border-radius:6px;padding:14px 16px;
-}
-.s-step span{color:var(–accent);font-weight:700;}
 
-/* RIGHT — on-screen keyboard (fallback method) */
-.s-right{}
-
-/* Typed text display — LARGE */
-.kbd-out{
-background:rgba(0,0,0,.7);border:2px solid var(–border);
-border-radius:6px;padding:14px 18px;margin-bottom:10px;
-min-height:62px;display:flex;align-items:center;gap:6px;
-transition:border-color .2s;
+/* Title */
+.s-title{
+text-align:center;
+font-family:‘Orbitron’,sans-serif;
+font-size:36px;font-weight:900;
+letter-spacing:10px;color:#fff;
+margin-bottom:4px;
 }
-.kbd-out.has-text{border-color:var(–accent);}
-.kbd-chars{
-font-family:var(–orb);font-size:clamp(16px,2vw,26px);
-font-weight:700;color:var(–accent);
-letter-spacing:3px;word-break:break-all;flex:1;
+.s-title span{color:#00d4ff;}
+.s-subtitle{
+text-align:center;font-size:13px;
+letter-spacing:4px;color:#4a7a9a;
+margin-bottom:36px;
+}
+
+/* PIN BOX — the most important element */
+.pin-box{
+background:#000;
+border:3px solid #00d4ff;
+border-radius:12px;
+padding:24px 32px;
+text-align:center;
+margin-bottom:28px;
+box-shadow:0 0 40px rgba(0,212,255,.2), inset 0 0 20px rgba(0,212,255,.05);
+}
+.pin-box-label{
+font-size:11px;letter-spacing:4px;
+color:#4a7a9a;margin-bottom:16px;
+text-transform:uppercase;
+}
+.pin-digits{
+display:flex;align-items:center;justify-content:center;
+gap:10px;flex-wrap:nowrap;
+}
+.pin-pre{
+font-family:‘Orbitron’,sans-serif;
+font-size:36px;font-weight:700;
+color:#4a7a9a;letter-spacing:2px;
+}
+.pin-d{
+font-family:‘Orbitron’,sans-serif;
+font-size:72px;font-weight:900;
+color:#00d4ff;line-height:1;
+background:rgba(0,212,255,.1);
+border:2px solid rgba(0,212,255,.4);
+border-radius:10px;
+padding:8px 16px;
+min-width:74px;text-align:center;
+text-shadow:0 0 30px rgba(0,212,255,.8);
+}
+.pin-box-hint{
+font-size:12px;color:#4a7a9a;
+margin-top:14px;letter-spacing:1px;
+}
+.pin-box-hint strong{color:#fff;}
+
+/* Steps */
+.steps-row{
+display:flex;gap:10px;
+margin-bottom:28px;
+}
+.step{
+flex:1;background:rgba(0,212,255,.06);
+border:1px solid rgba(0,212,255,.2);
+border-radius:8px;padding:14px 16px;
+text-align:center;
+}
+.step-n{
+font-family:‘Orbitron’,sans-serif;
+font-size:22px;font-weight:900;
+color:#00d4ff;margin-bottom:6px;
+}
+.step-t{
+font-size:12px;color:#c0d8e8;
+line-height:1.5;letter-spacing:.5px;
+}
+.step-t strong{color:#fff;}
+
+/* Keyboard row — just numbers + SNT- prefix + backspace + connect */
+.kbd-strip{
+display:flex;gap:6px;align-items:center;
+justify-content:center;flex-wrap:wrap;
+margin-bottom:10px;
+}
+.kk{
+min-width:60px;height:60px;
+background:#0d1e30;
+border:2px solid #1a3a54;
+border-radius:8px;
+font-family:‘Share Tech Mono’,monospace;
+font-size:22px;color:#8ab0c8;
+cursor:pointer;
+display:flex;align-items:center;justify-content:center;
+transition:all .12s;
+outline:3px solid transparent;outline-offset:2px;
+}
+.kk:focus,.kk:hover{
+background:rgba(0,212,255,.25);
+border-color:#00d4ff;color:#fff;
+outline-color:#00d4ff;
+transform:scale(1.08);
+}
+.kk.del{
+min-width:80px;color:#ff6080;
+border-color:rgba(255,96,128,.4);font-size:18px;
+}
+.kk.del:focus,.kk.del:hover{background:rgba(255,96,128,.2);border-color:#ff6080;color:#ff6080;}
+.kk.go{
+min-width:160px;height:60px;
+background:#00d4ff;color:#000;
+border-color:#00d4ff;
+font-family:‘Orbitron’,sans-serif;
+font-size:15px;font-weight:900;letter-spacing:3px;
+}
+.kk.go:focus,.kk.go:hover{background:#fff;outline-color:#00d4ff;}
+
+/* Typed text display */
+.kbd-display{
+background:#000;border:2px solid #1a3a54;
+border-radius:8px;padding:12px 20px;
+margin-bottom:12px;min-height:56px;
+display:flex;align-items:center;gap:6px;
+}
+.kbd-display.active{border-color:#00d4ff;}
+.kbd-typed{
+font-family:‘Orbitron’,sans-serif;
+font-size:28px;font-weight:700;
+color:#00d4ff;letter-spacing:4px;flex:1;
 text-shadow:0 0 16px rgba(0,212,255,.5);
-min-height:32px;
 }
-.kbd-cur{width:3px;height:28px;background:var(–accent);flex-shrink:0;animation:cur .8s step-end infinite;}
-@keyframes cur{0%,100%{opacity:1}50%{opacity:0}}
+.kbd-cursor{
+width:3px;height:30px;background:#00d4ff;
+animation:blink2 .8s step-end infinite;flex-shrink:0;
+}
+@keyframes blink2{0%,100%{opacity:1}50%{opacity:0}}
 
-/* Keys — large for TV */
-.kbd-rows{margin-bottom:10px;}
-.krow{display:flex;gap:4px;justify-content:center;margin-bottom:4px;}
-.k{
-min-width:52px;height:52px;padding:0 4px;
-background:rgba(10,24,38,.95);border:1px solid #1a3a54;
-border-radius:5px;
-font-family:var(–mono);font-size:18px;color:#8ab0c8;
-cursor:pointer;display:flex;align-items:center;justify-content:center;
-transition:all .12s;-webkit-tap-highlight-color:transparent;
-outline:2px solid transparent;outline-offset:2px;
-}
-.k:focus{outline-color:var(–accent);background:rgba(0,212,255,.2);border-color:var(–accent);color:#fff;}
-.k:hover{background:rgba(0,212,255,.15);border-color:var(–accent);color:#fff;}
-.k.del{min-width:80px;font-size:13px;letter-spacing:1px;color:var(–accent2);border-color:rgba(255,45,85,.4);}
-.k.del:focus,.k.del:hover{background:rgba(255,45,85,.2);border-color:var(–accent2);color:var(–accent2);}
-.k.go{
-width:100%;height:56px;margin-top:6px;
-background:var(–accent);color:#000;border-color:var(–accent);
-font-family:var(–orb);font-size:15px;font-weight:900;letter-spacing:3px;
-min-width:unset;
-}
-.k.go:focus,.k.go:hover{background:#00b5d4;outline-color:#fff;}
-.k.clr{min-width:70px;font-size:11px;letter-spacing:1px;border-color:#1a3a54;color:var(–dim);}
-
+/* Status */
 .s-status{
-margin-top:12px;text-align:center;font-size:13px;letter-spacing:2px;
-color:var(–dim);min-height:28px;padding:6px;
+text-align:center;font-size:13px;
+letter-spacing:2px;color:#4a7a9a;
+min-height:24px;margin-top:8px;
 }
-.s-status.ok{color:var(–accent3);}
-.s-status.err{color:var(–accent2);}
+.s-status.ok{color:#00ff7f;}
+.s-status.err{color:#ff4466;}
 
-/* PIN display — large spaced digits */
-.pin-row{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:nowrap;padding:10px 0;}
-.pin-prefix{font-family:var(–orb);font-size:28px;font-weight:700;color:var(–dim);letter-spacing:2px;white-space:nowrap;}
-.pin-digit{
-font-family:var(–orb);font-size:56px;font-weight:900;color:var(–accent);
-line-height:1;text-shadow:0 0 24px rgba(0,212,255,.7);
-background:rgba(0,212,255,.08);border:2px solid rgba(0,212,255,.3);
-border-radius:8px;padding:6px 14px;min-width:64px;text-align:center;
-}
-
-.spin{display:inline-block;width:10px;height:10px;border:2px solid var(–border);border-top-color:var(–accent);border-radius:50%;animation:rot .7s linear infinite;margin-right:6px;vertical-align:middle;}
+.spin2{display:inline-block;width:12px;height:12px;border:2px solid #1a3a54;border-top-color:#00d4ff;border-radius:50%;animation:rot .7s linear infinite;margin-right:6px;vertical-align:middle;}
 @keyframes rot{to{transform:rotate(360deg)}}
 #mcanvas{display:none;}
 </style>
@@ -227,66 +301,54 @@ border-radius:8px;padding:6px 14px;min-width:64px;text-align:center;
 
 <div class="setup" id="setup">
   <div class="setup-card">
-    <div class="s-logo">SENTI<span>NEL</span></div>
-    <div class="s-tag">TV DISPLAY · CCTV MONITOR</div>
 
 ```
-<div class="s-cols">
+<div class="s-title">SENTI<span>NEL</span></div>
+<div class="s-subtitle">TV · CCTV MONITOR</div>
 
-  <!-- LEFT: PIN — type this on phone -->
-  <div class="s-left">
-    <div class="s-box-label">⭐ TYPE THIS ON YOUR PHONE</div>
-    <div class="s-tv-id-box">
-      <div class="s-tv-id" id="tvPinDisplay"><span class="spin"></span></div>
-      <div style="font-size:10px;color:var(--dim);margin-top:10px;letter-spacing:1px;">Only 8 characters — easy to enter</div>
-    </div>
-    <div class="s-step">
-      <span>Step 1</span> — On your phone open <strong>sentinel-cam.html</strong><br>
-      <span>Step 2</span> — Tap <strong>START CAMERA</strong><br>
-      <span>Step 3</span> — In the Stream field enter the PIN above<br>
-      <span>Step 4</span> — Tap <strong>STREAM →</strong><br><br>
-      ✅ Your camera appears on the TV instantly.
-    </div>
+<!-- BIG PIN DISPLAY -->
+<div class="pin-box">
+  <div class="pin-box-label">YOUR TV PIN — TYPE THIS ON YOUR PHONE</div>
+  <div class="pin-digits" id="tvPinDisplay">
+    <span class="spin2"></span>
   </div>
-
-  <!-- RIGHT: on-screen keyboard if needed -->
-  <div class="s-right">
-    <div class="s-box-label">OR ENTER A CAMERA PIN HERE</div>
-
-    <div class="kbd-out" id="kbdOut">
-      <div class="kbd-chars" id="kbdChars"></div>
-      <div class="kbd-cur"></div>
-    </div>
-
-    <div class="kbd-rows">
-      <div class="krow">
-        <button class="k" onclick="kt('S')">S</button>
-        <button class="k" onclick="kt('N')">N</button>
-        <button class="k" onclick="kt('T')">T</button>
-        <button class="k" onclick="kt('-')">-</button>
-        <button class="k" onclick="kt('1')">1</button>
-        <button class="k" onclick="kt('2')">2</button>
-        <button class="k" onclick="kt('3')">3</button>
-        <button class="k" onclick="kt('4')">4</button>
-        <button class="k" onclick="kt('5')">5</button>
-        <button class="k" onclick="kt('6')">6</button>
-        <button class="k" onclick="kt('7')">7</button>
-        <button class="k" onclick="kt('8')">8</button>
-        <button class="k" onclick="kt('9')">9</button>
-        <button class="k" onclick="kt('0')">0</button>
-        <button class="k del" onclick="kb()">⌫</button>
-      </div>
-      <button class="k go" onclick="connectCam()">▶ CONNECT</button>
-    </div>
-    <p style="font-size:10px;color:var(--dim);margin-top:10px;letter-spacing:1px;line-height:1.7">
-      Camera PINs also look like <strong style="color:var(--text)">SNT-1234</strong>.<br>
-      Type it above and press CONNECT.
-    </p>
-  </div>
-
+  <div class="pin-box-hint">Open <strong>sentinel-cam.html</strong> on your phone → START → enter this PIN → STREAM</div>
 </div>
 
-<div class="s-status" id="sStatus"><span class="spin"></span> Initialising…</div>
+<!-- 4 STEPS -->
+<div class="steps-row">
+  <div class="step"><div class="step-n">1</div><div class="step-t">Open <strong>sentinel-cam.html</strong> on phone</div></div>
+  <div class="step"><div class="step-n">2</div><div class="step-t">Tap <strong>START CAMERA</strong></div></div>
+  <div class="step"><div class="step-n">3</div><div class="step-t">Enter the PIN above in Stream field</div></div>
+  <div class="step"><div class="step-n">4</div><div class="step-t">Tap <strong>STREAM →</strong> — done!</div></div>
+</div>
+
+<!-- KEYBOARD (only if typing cam PIN on TV) -->
+<div class="kbd-display" id="kbdOut">
+  <div class="kbd-typed" id="kbdChars"></div>
+  <div class="kbd-cursor"></div>
+</div>
+
+<div class="kbd-strip">
+  <button class="kk" onclick="kt('S')">S</button>
+  <button class="kk" onclick="kt('N')">N</button>
+  <button class="kk" onclick="kt('T')">T</button>
+  <button class="kk" onclick="kt('-')">-</button>
+  <button class="kk" onclick="kt('1')">1</button>
+  <button class="kk" onclick="kt('2')">2</button>
+  <button class="kk" onclick="kt('3')">3</button>
+  <button class="kk" onclick="kt('4')">4</button>
+  <button class="kk" onclick="kt('5')">5</button>
+  <button class="kk" onclick="kt('6')">6</button>
+  <button class="kk" onclick="kt('7')">7</button>
+  <button class="kk" onclick="kt('8')">8</button>
+  <button class="kk" onclick="kt('9')">9</button>
+  <button class="kk" onclick="kt('0')">0</button>
+  <button class="kk del" onclick="kb()">⌫ DEL</button>
+  <button class="kk go" onclick="connectCam()">▶ CONNECT</button>
+</div>
+
+<div class="s-status" id="sStatus"><span class="spin2"></span> Connecting…</div>
 ```
 
   </div>
@@ -457,10 +519,7 @@ function initPeer() {
 
 function showPin(pin) {
   const digits = pin.replace('SNT-','');
-  const html = `<div class="pin-row">
-    <span class="pin-prefix">SNT-</span>
-    ${digits.split('').map(d=>`<span class="pin-digit">${d}</span>`).join('')}
-  </div>`;
+  const html = `<span class="pin-pre">SNT-</span>${digits.split('').map(d=>`<span class="pin-d">${d}</span>`).join('')}`;
   document.getElementById('tvPinDisplay').innerHTML = html;
   document.getElementById('ftrId').textContent = pin;
 }
@@ -468,15 +527,15 @@ function showPin(pin) {
 // ── ON-SCREEN KEYBOARD ──
 let kbdVal = '';
 
-function kt(ch) {    // type a character
+function kt(ch) {
   kbdVal += ch.toUpperCase();
   refreshKbd();
 }
-function kb() {      // backspace
+function kb() {
   kbdVal = kbdVal.slice(0,-1);
   refreshKbd();
 }
-function kc() {      // clear all
+function kc() {
   kbdVal = '';
   refreshKbd();
 }
@@ -484,7 +543,7 @@ function refreshKbd() {
   const el = document.getElementById('kbdChars');
   const out = document.getElementById('kbdOut');
   el.textContent = kbdVal;
-  out.classList.toggle('has-text', kbdVal.length > 0);
+  out.classList.toggle('active', kbdVal.length > 0);
 }
 
 // ── CONNECT A CAM ──
