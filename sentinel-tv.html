@@ -118,78 +118,92 @@ body::before{content:’’;position:fixed;inset:0;background:radial-gradient(el
 .abanner.show{display:block;}
 
 /* SETUP OVERLAY */
-.setup{position:fixed;inset:0;background:rgba(2,4,8,.97);display:flex;align-items:center;justify-content:center;z-index:200;backdrop-filter:blur(10px);}
+.setup{position:fixed;inset:0;background:rgba(2,4,8,.97);display:flex;align-items:center;justify-content:center;z-index:200;}
 .setup.gone{display:none;}
-.setup-card{width:min(820px,95vw);border:1px solid var(–border);border-radius:10px;background:var(–panel);padding:36px 44px;}
-.s-logo{font-family:var(–orb);font-size:30px;font-weight:900;letter-spacing:10px;color:#fff;text-align:center;text-shadow:0 0 40px rgba(0,212,255,.4);}
+.setup-card{width:96vw;max-width:1100px;border:1px solid var(–border);border-radius:10px;background:var(–panel);padding:32px 40px;}
+
+.s-logo{font-family:var(–orb);font-size:28px;font-weight:900;letter-spacing:8px;color:#fff;text-align:center;text-shadow:0 0 40px rgba(0,212,255,.4);}
 .s-logo span{color:var(–accent);}
-.s-tag{font-size:8px;letter-spacing:5px;color:var(–dim);text-align:center;margin-bottom:24px;margin-top:4px;}
+.s-tag{font-size:8px;letter-spacing:5px;color:var(–dim);text-align:center;margin-bottom:20px;margin-top:3px;}
 
-/* TV ID display */
-.s-id-box{background:rgba(0,0,0,.5);border:1px solid var(–border);border-radius:6px;padding:16px 24px;margin-bottom:20px;text-align:center;}
-.s-id-lbl{font-size:9px;letter-spacing:3px;color:var(–dim);margin-bottom:8px;}
-.s-id{font-family:var(–orb);font-size:clamp(12px,1.6vw,18px);font-weight:700;color:var(–accent);letter-spacing:3px;word-break:break-all;line-height:1.5;text-shadow:0 0 20px rgba(0,212,255,.4);}
-.s-id-hint{font-size:10px;color:var(–dim);margin-top:6px;letter-spacing:1px;}
+/* TWO COLUMN LAYOUT */
+.s-cols{display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:start;}
 
-.s-div{display:flex;align-items:center;gap:14px;margin:16px 0;color:var(–dim);font-size:10px;letter-spacing:3px;}
-.s-div::before,.s-div::after{content:’’;flex:1;height:1px;background:var(–border);}
-
-/* Input display (shows typed text) */
-.kbd-display{
-display:flex;align-items:center;justify-content:space-between;
+/* LEFT — TV ID (primary method) */
+.s-left{}
+.s-box-label{font-size:9px;letter-spacing:3px;color:var(–dim);margin-bottom:8px;text-transform:uppercase;}
+.s-tv-id-box{
 background:rgba(0,0,0,.6);border:2px solid var(–accent);
-border-radius:6px;padding:12px 18px;margin-bottom:14px;min-height:52px;
+border-radius:8px;padding:20px;text-align:center;margin-bottom:12px;
 }
-.kbd-text{
-font-family:var(–orb);font-size:clamp(11px,1.4vw,16px);
-color:var(–accent);letter-spacing:2px;word-break:break-all;flex:1;
+.s-tv-id{
+font-family:var(–orb);font-size:clamp(14px,1.6vw,22px);
+font-weight:700;color:var(–accent);letter-spacing:2px;
+word-break:break-all;line-height:1.6;
+text-shadow:0 0 20px rgba(0,212,255,.5);
 }
-.kbd-cursor{
-width:2px;height:22px;background:var(–accent);margin-left:4px;flex-shrink:0;
-animation:cur .8s step-end infinite;
+.s-step{
+font-size:11px;color:var(–text);line-height:1.9;
+background:rgba(0,0,0,.3);border:1px solid var(–border);
+border-radius:6px;padding:14px 16px;
 }
+.s-step span{color:var(–accent);font-weight:700;}
+
+/* RIGHT — on-screen keyboard (fallback method) */
+.s-right{}
+
+/* Typed text display — LARGE */
+.kbd-out{
+background:rgba(0,0,0,.7);border:2px solid var(–border);
+border-radius:6px;padding:14px 18px;margin-bottom:10px;
+min-height:62px;display:flex;align-items:center;gap:6px;
+transition:border-color .2s;
+}
+.kbd-out.has-text{border-color:var(–accent);}
+.kbd-chars{
+font-family:var(–orb);font-size:clamp(16px,2vw,26px);
+font-weight:700;color:var(–accent);
+letter-spacing:3px;word-break:break-all;flex:1;
+text-shadow:0 0 16px rgba(0,212,255,.5);
+min-height:32px;
+}
+.kbd-cur{width:3px;height:28px;background:var(–accent);flex-shrink:0;animation:cur .8s step-end infinite;}
 @keyframes cur{0%,100%{opacity:1}50%{opacity:0}}
-.kbd-clear{
-padding:6px 12px;background:rgba(255,45,85,.15);border:1px solid var(–accent2);
-border-radius:3px;color:var(–accent2);font-family:var(–mono);font-size:10px;
-cursor:pointer;flex-shrink:0;margin-left:10px;
-transition:background .15s;
-}
-.kbd-clear:focus,.kbd-clear:hover{background:rgba(255,45,85,.3);outline:none;}
 
-/* On-screen keyboard */
-.kbd-wrap{margin-bottom:14px;}
-.kbd-row{display:flex;gap:5px;justify-content:center;margin-bottom:5px;}
+/* Keys — large for TV */
+.kbd-rows{margin-bottom:10px;}
+.krow{display:flex;gap:4px;justify-content:center;margin-bottom:4px;}
 .k{
-min-width:44px;height:44px;padding:0 6px;
-background:rgba(7,20,32,.9);border:1px solid var(–border);
-border-radius:4px;color:var(–text);
-font-family:var(–mono);font-size:14px;
+min-width:52px;height:52px;padding:0 4px;
+background:rgba(10,24,38,.95);border:1px solid #1a3a54;
+border-radius:5px;
+font-family:var(–mono);font-size:18px;color:#8ab0c8;
 cursor:pointer;display:flex;align-items:center;justify-content:center;
-transition:all .15s;outline:none;
--webkit-tap-highlight-color:transparent;
+transition:all .12s;-webkit-tap-highlight-color:transparent;
+outline:2px solid transparent;outline-offset:2px;
 }
-.k:hover,.k:focus{background:rgba(0,212,255,.18);border-color:var(–accent);color:var(–accent);}
-.k.wide{min-width:80px;font-size:11px;letter-spacing:1px;}
-.k.connect-key{
+.k:focus{outline-color:var(–accent);background:rgba(0,212,255,.2);border-color:var(–accent);color:#fff;}
+.k:hover{background:rgba(0,212,255,.15);border-color:var(–accent);color:#fff;}
+.k.del{min-width:80px;font-size:13px;letter-spacing:1px;color:var(–accent2);border-color:rgba(255,45,85,.4);}
+.k.del:focus,.k.del:hover{background:rgba(255,45,85,.2);border-color:var(–accent2);color:var(–accent2);}
+.k.go{
+width:100%;height:56px;margin-top:6px;
 background:var(–accent);color:#000;border-color:var(–accent);
-font-family:var(–orb);font-weight:700;font-size:11px;letter-spacing:2px;
-min-width:110px;
+font-family:var(–orb);font-size:15px;font-weight:900;letter-spacing:3px;
+min-width:unset;
 }
-.k.connect-key:hover,.k.connect-key:focus{background:#00b5d4;}
+.k.go:focus,.k.go:hover{background:#00b5d4;outline-color:#fff;}
+.k.clr{min-width:70px;font-size:11px;letter-spacing:1px;border-color:#1a3a54;color:var(–dim);}
 
-.s-hint{font-size:10px;color:var(–dim);letter-spacing:1px;line-height:1.8;margin-top:8px;text-align:center;}
-.s-hint strong{color:var(–text);}
-.s-status{margin-top:12px;text-align:center;font-size:11px;letter-spacing:2px;color:var(–dim);min-height:24px;}
+.s-status{
+margin-top:12px;text-align:center;font-size:13px;letter-spacing:2px;
+color:var(–dim);min-height:28px;padding:6px;
+}
 .s-status.ok{color:var(–accent3);}
 .s-status.err{color:var(–accent2);}
 
 .spin{display:inline-block;width:10px;height:10px;border:2px solid var(–border);border-top-color:var(–accent);border-radius:50%;animation:rot .7s linear infinite;margin-right:6px;vertical-align:middle;}
 @keyframes rot{to{transform:rotate(360deg)}}
-
-/* Motion detection frame diff - invisible canvas */
-
-/* Motion detection frame diff - invisible canvas */
 #mcanvas{display:none;}
 </style>
 
@@ -204,77 +218,87 @@ min-width:110px;
     <div class="s-tag">TV DISPLAY · CCTV MONITOR</div>
 
 ```
-<div class="s-id-box">
-  <div class="s-id-lbl">THIS TV'S DISPLAY ID — SHARE WITH YOUR PHONE</div>
-  <div class="s-id" id="tvId"><span class="spin"></span> Connecting…</div>
-  <div class="s-id-hint">📱 On your phone: open sentinel-cam.html → START → paste THIS ID into the Stream field</div>
-</div>
+<div class="s-cols">
 
-<div class="s-div">OR TYPE CAMERA ID BELOW USING YOUR REMOTE</div>
+  <!-- LEFT: Recommended — phone connects to TV -->
+  <div class="s-left">
+    <div class="s-box-label">⭐ EASIEST — YOUR TV'S ID</div>
+    <div class="s-tv-id-box">
+      <div class="s-tv-id" id="tvId"><span class="spin"></span> Connecting…</div>
+    </div>
+    <div class="s-step">
+      <span>Step 1</span> — On your phone, open <strong>sentinel-cam.html</strong><br>
+      <span>Step 2</span> — Tap <strong>START CAMERA</strong><br>
+      <span>Step 3</span> — In the Stream field, type/paste the ID above<br>
+      <span>Step 4</span> — Tap <strong>STREAM →</strong><br><br>
+      ✅ Camera appears on this TV instantly.<br>
+      No typing on TV needed at all.
+    </div>
+  </div>
 
-<!-- Typed text display -->
-<div class="kbd-display">
-  <div class="kbd-text" id="kbdText">—</div>
-  <div class="kbd-cursor"></div>
-  <button class="kbd-clear" onclick="kbdClear()">CLEAR</button>
-</div>
+  <!-- RIGHT: Fallback — type camera ID on TV -->
+  <div class="s-right">
+    <div class="s-box-label">ALTERNATIVE — TYPE CAMERA ID HERE</div>
 
-<!-- On-screen keyboard — works with TV remote D-pad clicks -->
-<div class="kbd-wrap">
-  <div class="kbd-row">
-    <button class="k" onclick="kbdType('0')">0</button>
-    <button class="k" onclick="kbdType('1')">1</button>
-    <button class="k" onclick="kbdType('2')">2</button>
-    <button class="k" onclick="kbdType('3')">3</button>
-    <button class="k" onclick="kbdType('4')">4</button>
-    <button class="k" onclick="kbdType('5')">5</button>
-    <button class="k" onclick="kbdType('6')">6</button>
-    <button class="k" onclick="kbdType('7')">7</button>
-    <button class="k" onclick="kbdType('8')">8</button>
-    <button class="k" onclick="kbdType('9')">9</button>
-    <button class="k" onclick="kbdType('-')">-</button>
-    <button class="k wide" onclick="kbdBackspace()">⌫ DEL</button>
-  </div>
-  <div class="kbd-row">
-    <button class="k" onclick="kbdType('a')">a</button>
-    <button class="k" onclick="kbdType('b')">b</button>
-    <button class="k" onclick="kbdType('c')">c</button>
-    <button class="k" onclick="kbdType('d')">d</button>
-    <button class="k" onclick="kbdType('e')">e</button>
-    <button class="k" onclick="kbdType('f')">f</button>
-    <button class="k" onclick="kbdType('g')">g</button>
-    <button class="k" onclick="kbdType('h')">h</button>
-    <button class="k" onclick="kbdType('i')">i</button>
-    <button class="k" onclick="kbdType('j')">j</button>
-    <button class="k" onclick="kbdType('k')">k</button>
-    <button class="k" onclick="kbdType('l')">l</button>
-  </div>
-  <div class="kbd-row">
-    <button class="k" onclick="kbdType('m')">m</button>
-    <button class="k" onclick="kbdType('n')">n</button>
-    <button class="k" onclick="kbdType('o')">o</button>
-    <button class="k" onclick="kbdType('p')">p</button>
-    <button class="k" onclick="kbdType('q')">q</button>
-    <button class="k" onclick="kbdType('r')">r</button>
-    <button class="k" onclick="kbdType('s')">s</button>
-    <button class="k" onclick="kbdType('t')">t</button>
-    <button class="k" onclick="kbdType('u')">u</button>
-    <button class="k" onclick="kbdType('v')">v</button>
-    <button class="k" onclick="kbdType('w')">w</button>
-    <button class="k" onclick="kbdType('x')">x</button>
-    <button class="k" onclick="kbdType('y')">y</button>
-    <button class="k" onclick="kbdType('z')">z</button>
-  </div>
-  <div class="kbd-row" style="margin-top:8px">
-    <button class="k connect-key" onclick="connectCam()">▶ CONNECT</button>
-  </div>
-</div>
+    <div class="kbd-out" id="kbdOut">
+      <div class="kbd-chars" id="kbdChars"></div>
+      <div class="kbd-cur"></div>
+    </div>
 
-<p class="s-hint">
-  On your phone open <strong>sentinel-cam.html</strong> → tap START →
-  copy the Camera ID → type it above using your remote, then press CONNECT.<br>
-  Or share the <strong>TV Display ID</strong> above with your phone — it streams automatically.
-</p>
+    <div class="kbd-rows">
+      <div class="krow">
+        <button class="k" onclick="kt('1')">1</button>
+        <button class="k" onclick="kt('2')">2</button>
+        <button class="k" onclick="kt('3')">3</button>
+        <button class="k" onclick="kt('4')">4</button>
+        <button class="k" onclick="kt('5')">5</button>
+        <button class="k" onclick="kt('6')">6</button>
+        <button class="k" onclick="kt('7')">7</button>
+        <button class="k" onclick="kt('8')">8</button>
+        <button class="k" onclick="kt('9')">9</button>
+        <button class="k" onclick="kt('0')">0</button>
+        <button class="k" onclick="kt('-')">-</button>
+      </div>
+      <div class="krow">
+        <button class="k" onclick="kt('a')">a</button>
+        <button class="k" onclick="kt('b')">b</button>
+        <button class="k" onclick="kt('c')">c</button>
+        <button class="k" onclick="kt('d')">d</button>
+        <button class="k" onclick="kt('e')">e</button>
+        <button class="k" onclick="kt('f')">f</button>
+        <button class="k" onclick="kt('g')">g</button>
+        <button class="k" onclick="kt('h')">h</button>
+        <button class="k" onclick="kt('i')">i</button>
+        <button class="k" onclick="kt('j')">j</button>
+        <button class="k del" onclick="kb()">⌫</button>
+      </div>
+      <div class="krow">
+        <button class="k" onclick="kt('k')">k</button>
+        <button class="k" onclick="kt('l')">l</button>
+        <button class="k" onclick="kt('m')">m</button>
+        <button class="k" onclick="kt('n')">n</button>
+        <button class="k" onclick="kt('o')">o</button>
+        <button class="k" onclick="kt('p')">p</button>
+        <button class="k" onclick="kt('q')">q</button>
+        <button class="k" onclick="kt('r')">r</button>
+        <button class="k" onclick="kt('s')">s</button>
+        <button class="k" onclick="kt('t')">t</button>
+        <button class="k clr" onclick="kc()">CLR</button>
+      </div>
+      <div class="krow">
+        <button class="k" onclick="kt('u')">u</button>
+        <button class="k" onclick="kt('v')">v</button>
+        <button class="k" onclick="kt('w')">w</button>
+        <button class="k" onclick="kt('x')">x</button>
+        <button class="k" onclick="kt('y')">y</button>
+        <button class="k" onclick="kt('z')">z</button>
+      </div>
+      <button class="k go" onclick="connectCam()">▶ CONNECT</button>
+    </div>
+  </div>
+
+</div><!-- end s-cols -->
+
 <div class="s-status" id="sStatus"><span class="spin"></span> Initialising…</div>
 ```
 
@@ -425,24 +449,23 @@ function initPeer() {
 // ── ON-SCREEN KEYBOARD ──
 let kbdVal = '';
 
-function kbdType(ch) {
+function kt(ch) {    // type a character
   kbdVal += ch;
-  updateKbdDisplay();
+  refreshKbd();
 }
-
-function kbdBackspace() {
-  kbdVal = kbdVal.slice(0, -1);
-  updateKbdDisplay();
+function kb() {      // backspace
+  kbdVal = kbdVal.slice(0,-1);
+  refreshKbd();
 }
-
-function kbdClear() {
+function kc() {      // clear all
   kbdVal = '';
-  updateKbdDisplay();
+  refreshKbd();
 }
-
-function updateKbdDisplay() {
-  const el = document.getElementById('kbdText');
-  el.textContent = kbdVal || '—';
+function refreshKbd() {
+  const el = document.getElementById('kbdChars');
+  const out = document.getElementById('kbdOut');
+  el.textContent = kbdVal;
+  out.classList.toggle('has-text', kbdVal.length > 0);
 }
 
 // ── CONNECT A CAM ──
@@ -664,14 +687,24 @@ function setStatus(cls, msg) {
 
 // ── KEYBOARD / REMOTE NAV ──
 document.addEventListener('keydown', e => {
-  switch(e.key) {
-    case '1': setLayout(1); break;
-    case '2': setLayout(2); break;
-    case '4': setLayout(4); break;
-    case 'p': case 'P': setLayout('pip'); break;
-    case 'a': case 'A': addMoreCam(); break;
-    case 'Escape': document.getElementById('setup').classList.add('gone'); break;
-    case 'm': case 'M': TV.motionOn=!TV.motionOn; break;
+  const setupOpen = !document.getElementById('setup').classList.contains('gone');
+  const tag = document.activeElement?.tagName;
+  if (tag === 'BUTTON' && (e.key === 'Enter' || e.key === ' ')) return;
+
+  if (setupOpen) {
+    if (e.key === 'Backspace') { kb(); return; }
+    if (e.key === 'Enter') { connectCam(); return; }
+    if (/^[a-z0-9\-]$/i.test(e.key)) { kt(e.key.toLowerCase()); return; }
+    if (e.key === 'Escape') { document.getElementById('setup').classList.add('gone'); return; }
+  } else {
+    switch(e.key) {
+      case '1': setLayout(1); break;
+      case '2': setLayout(2); break;
+      case '4': setLayout(4); break;
+      case 'p': case 'P': setLayout('pip'); break;
+      case 'a': case 'A': addMoreCam(); break;
+      case 'm': case 'M': TV.motionOn=!TV.motionOn; break;
+    }
   }
 });
 
