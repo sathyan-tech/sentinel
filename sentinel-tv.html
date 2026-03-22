@@ -468,44 +468,96 @@ function startUptime() {
 
 // ── PEER — short PIN ID ──
 function genPin() {
-  // 4-digit PIN, retried until peer accepts it
   return 'SNT-' + Math.floor(1000 + Math.random() * 9000);
 }
 
+let peerRetries = 0;
+
 function initPeer() {
   const pin = genPin();
-  TV.peer = new Peer(pin, { debug: 0 });
+  setStatus('', `Connecting… (${pin})`);
+
+  // Try multiple PeerJS servers for reliability on TV browsers
+  const configs = [
+    { host: '0.peerjs.com', port: 443, secure: true, path: '/' },
+    { host: 'peerjs-server.herokuapp.com', port: 443, secure: true, path: '/' },
+  ];
+  const cfg = configs[peerRetries % configs.length] || configs[0];
+
+  try {
+    TV.peer = new Peer(pin, {
+      host: cfg.host, port: cfg.port,
+      secure: cfg.secure, path: cfg.path,
+      debug: 1,
+      config: {
+        iceServers: [
+          { urls: 'stun:stun.l.google.com:19302' },
+          { urls: 'stun:stun1.l.google.com:19302' },
+        ]
+      }
+    });
+  } catch(e) {
+    // Fallback to default PeerJS cloud
+    TV.peer = new Peer(pin, { debug: 1 });
+  }
+
+  // Timeout — if no 'open' within 8s, show PIN anyway and retry in background
+  const openTimeout = setTimeout(() => {
+    if (!TV.myId) {
+      peerRetries++;
+      if (peerRetries <= 3) {
+        // Show a "trying…" message and retry
+        setStatus('err', `Server timeout — retrying (${peerRetries}/3)…`);
+        try { TV.peer.destroy(); } catch(e) {}
+        setTimeout(initPeer, 1000);
+      } else {
+        // Give up on PeerJS cloud — show manual instructions
+        showPinFallback();
+      }
+    }
+  }, 8000);
 
   TV.peer.on('open', id => {
+    clearTimeout(openTimeout);
     TV.myId = id;
-    TV.shortPin = id; // e.g. SNT-7342
+    TV.shortPin = id;
     showPin(id);
-    setStatus('ok', '✓ Ready — share the PIN with your phone');
+    setStatus('ok', '✓ Ready — type this PIN on your phone');
   });
 
   TV.peer.on('error', e => {
+    clearTimeout(openTimeout);
     if (e.type === 'unavailable-id') {
-      // PIN taken, try another
-      TV.peer.destroy();
-      initPeer();
+      try { TV.peer.destroy(); } catch(x) {}
+      setTimeout(initPeer, 500);
+    } else if (e.type === 'network' || e.type === 'server-error' || e.type === 'socket-error') {
+      peerRetries++;
+      setStatus('err', `Network error (${e.type}) — retrying…`);
+      try { TV.peer.destroy(); } catch(x) {}
+      if (peerRetries <= 3) setTimeout(initPeer, 2000);
+      else showPinFallback();
     } else {
-      setStatus('err', `Error: ${e.message}`);
+      setStatus('err', `${e.type}: ${e.message || ''}`);
     }
   });
 
+  TV.peer.on('disconnected', () => {
+    setStatus('err', 'Disconnected — reconnecting…');
+    try { TV.peer.reconnect(); } catch(e) {}
+  });
+
   TV.peer.on('call', call => {
-    // TV has no camera — answer with silent audio so WebRTC handshake completes
     try {
       const ctx = new (window.AudioContext || window.webkitAudioContext)();
       const dest = ctx.createMediaStreamDestination();
       call.answer(dest.stream);
-      ctx.close();
+      setTimeout(()=>{ try{ctx.close();}catch(e){} }, 3000);
     } catch(e) {
-      call.answer(); // fallback: answer with nothing
+      call.answer();
     }
 
     call.on('stream', stream => {
-      if (!stream || stream.getVideoTracks().length === 0) return; // ignore empty streams
+      if (!stream || stream.getVideoTracks().length === 0) return;
       const label = `CAM-${TV.cams.length+1}`;
       addCamCell(call.peer, stream, label);
       setStatus('ok', `✓ ${label} connected`);
@@ -517,10 +569,26 @@ function initPeer() {
   });
 }
 
+function showPinFallback() {
+  // PeerJS cloud failed — show error with instructions to use phone-first method
+  document.getElementById('tvPinDisplay').innerHTML = `
+    <span style="font-family:'Share Tech Mono',monospace;font-size:16px;color:#ff6060;
+      display:block;text-align:center;padding:10px;line-height:1.8">
+      ⚠ Could not reach relay server<br>
+      <span style="color:#fff;font-size:14px">Check internet connection &amp; reload page</span><br>
+      <span style="color:#4a7a9a;font-size:12px">Google TV: try refreshing with the menu button</span>
+    </span>`;
+  setStatus('err', 'Connection failed — reload the page to try again');
+}
+
 function showPin(pin) {
+  // Format: SNT- then 4 large digit boxes
   const digits = pin.replace('SNT-','');
-  const html = `<span class="pin-pre">SNT-</span>${digits.split('').map(d=>`<span class="pin-d">${d}</span>`).join('')}`;
-  document.getElementById('tvPinDisplay').innerHTML = html;
+  const digitBoxes = digits.split('').map(d =>
+    `<span class="pin-d">${d}</span>`
+  ).join('');
+  document.getElementById('tvPinDisplay').innerHTML =
+    `<span class="pin-pre">SNT-</span>${digitBoxes}`;
   document.getElementById('ftrId').textContent = pin;
 }
 
