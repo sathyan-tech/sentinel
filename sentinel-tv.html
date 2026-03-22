@@ -4,564 +4,550 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SENTINEL — TV</title>
+<title>SENTINEL TV</title>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Share+Tech+Mono&display=swap');
-*{margin:0;padding:0;box-sizing:border-box;}
-html,body{width:100%;height:100%;background:#000;color:#fff;font-family:'Share Tech Mono',monospace;overflow:hidden;}
-body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,200,255,.01) 3px,rgba(0,200,255,.01) 4px);pointer-events:none;z-index:9999;}
+* { margin:0; padding:0; box-sizing:border-box; }
+html, body { width:100%; height:100%; background:#000; color:#fff; font-family:'Courier New',monospace; overflow:hidden; }
 
-/* HEADER */
-.hdr{position:fixed;top:0;left:0;right:0;height:60px;display:flex;align-items:center;justify-content:space-between;padding:0 36px;background:rgba(0,0,0,.95);border-bottom:1px solid #0a2030;z-index:100;}
-.logo{font-family:‘Orbitron’,sans-serif;font-size:20px;font-weight:900;letter-spacing:6px;color:#fff;}
-.logo span{color:#00d4ff;}
-.hstats{display:flex;gap:20px;align-items:center;}
-.hs{text-align:center;}
-.hs-n{font-family:‘Orbitron’,sans-serif;font-size:18px;font-weight:700;color:#00d4ff;line-height:1;}
-.hs-n.r{color:#ff4060;}
-.hs-l{font-size:8px;letter-spacing:2px;color:#1a3a4a;margin-top:2px;}
-.hdv{width:1px;height:24px;background:#0a2030;}
-.lpill{display:flex;align-items:center;gap:6px;padding:5px 12px;border:1px solid #0a2030;border-radius:16px;font-size:9px;letter-spacing:2px;color:#1a3a4a;}
-.lpill .d{width:6px;height:6px;border-radius:50%;background:#1a3a4a;}
-.lpill.live{border-color:rgba(0,255,127,.4);color:#00ff7f;}
-.lpill.live .d{background:#00ff7f;animation:bl 1.5s infinite;}
-@keyframes bl{0%,100%{opacity:1}50%{opacity:.2}}
-.clk{font-family:‘Orbitron’,sans-serif;font-size:16px;color:#00d4ff;}
+/* ── FEEDS ── */
+#feeds {
+position:fixed; top:0; left:0; right:0; bottom:80px;
+display:grid; background:#111;
+}
+#feeds.n1 { grid-template-columns:1fr; }
+#feeds.n2 { grid-template-columns:1fr 1fr; }
+#feeds.n3 { grid-template-columns:1fr 1fr; grid-template-rows:1fr 1fr; }
+#feeds.n4 { grid-template-columns:1fr 1fr; grid-template-rows:1fr 1fr; }
+#feeds.n3 .cam:first-child { grid-column:1/3; }
 
-/* FEEDS */
-.feeds{position:fixed;top:60px;left:0;right:0;bottom:64px;padding:3px;display:grid;gap:3px;background:#111;}
-.feeds.l1{grid-template-columns:1fr;}
-.feeds.l2{grid-template-columns:1fr 1fr;}
-.feeds.l4{grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;}
-.cam{position:relative;background:#000;overflow:hidden;}
-.cam video{position:absolute;inset:0;width:100%!important;height:100%!important;object-fit:cover;display:block;transform:translateZ(0);}
-.cam-hud{position:absolute;inset:0;z-index:3;pointer-events:none;}
-.cc{position:absolute;width:22px;height:22px;border-color:#00d4ff;border-style:solid;opacity:.5;}
-.cc.tl{top:10px;left:10px;border-width:2px 0 0 2px;}.cc.tr{top:10px;right:10px;border-width:2px 2px 0 0;}
-.cc.bl{bottom:10px;left:10px;border-width:0 0 2px 2px;}.cc.br{bottom:10px;right:10px;border-width:0 2px 2px 0;}
-.cam-lbl{position:absolute;bottom:10px;left:12px;font-family:‘Orbitron’,sans-serif;font-size:10px;font-weight:700;letter-spacing:2px;color:#00d4ff;background:rgba(0,0,0,.8);padding:3px 9px;border-radius:2px;}
-.cam-live{position:absolute;top:10px;left:12px;display:flex;align-items:center;gap:4px;font-size:9px;letter-spacing:2px;color:#00ff7f;background:rgba(0,0,0,.8);padding:3px 8px;border-radius:2px;}
-.cam-live .ld{width:5px;height:5px;border-radius:50%;background:#00ff7f;animation:bl 1.5s infinite;}
-.cam-ts{position:absolute;top:10px;right:12px;font-size:8px;color:#1a3a4a;background:rgba(0,0,0,.8);padding:3px 7px;border-radius:2px;}
-.mfl{position:absolute;inset:0;z-index:4;pointer-events:none;background:rgba(255,200,0,.1);opacity:0;transition:opacity .12s;}
-.mfl.on{opacity:1;}
-.cam.alerted{animation:ab 1s ease 3;}
-@keyframes ab{0%,100%{outline:none;}50%{outline:3px solid #ff4060;}}
+.cam {
+position:relative; background:#000; overflow:hidden;
+}
+.cam video {
+position:absolute; inset:0;
+width:100% !important; height:100% !important;
+object-fit:cover; display:block;
+transform:translateZ(0); -webkit-transform:translateZ(0);
+}
+.cam-label {
+position:absolute; bottom:10px; left:12px;
+font-size:11px; letter-spacing:2px; color:#00e5ff;
+background:rgba(0,0,0,.75); padding:3px 9px; border-radius:2px;
+z-index:3;
+}
+.cam-live {
+position:absolute; top:10px; left:12px;
+display:flex; align-items:center; gap:5px;
+font-size:9px; letter-spacing:2px; color:#00ff88;
+background:rgba(0,0,0,.75); padding:3px 8px; border-radius:2px;
+z-index:3;
+}
+.cam-live .d { width:5px; height:5px; border-radius:50%; background:#00ff88; animation:bl 1.5s infinite; }
+@keyframes bl { 0%,100%{opacity:1}50%{opacity:.2} }
+.cc { position:absolute; width:20px; height:20px; border-color:#00e5ff; border-style:solid; opacity:.5; z-index:3; }
+.cc.tl{top:10px;left:10px;border-width:2px 0 0 2px;}
+.cc.tr{top:10px;right:10px;border-width:2px 2px 0 0;}
+.cc.bl{bottom:10px;left:10px;border-width:0 0 2px 2px;}
+.cc.br{bottom:10px;right:10px;border-width:0 2px 2px 0;}
+.mfl { position:absolute; inset:0; z-index:4; pointer-events:none; background:rgba(255,200,0,.12); opacity:0; transition:opacity .12s; }
+.mfl.on { opacity:1; }
 
-/* FOOTER */
-.ftr{position:fixed;bottom:0;left:0;right:0;height:64px;background:rgba(0,0,0,.95);border-top:1px solid #0a2030;display:flex;align-items:center;justify-content:space-between;padding:0 28px;z-index:100;}
-.ftr-pin{display:flex;flex-direction:column;gap:1px;}
-.ftr-pin-l{font-size:7px;letter-spacing:2px;color:#1a3a4a;}
-.ftr-pin-v{font-family:‘Orbitron’,sans-serif;font-size:11px;color:#00d4ff;}
-.ftr-ev{display:flex;gap:5px;overflow:hidden;}
-.fev{padding:3px 10px;background:rgba(0,16,24,.9);border:1px solid #0a2030;border-radius:2px;font-size:8px;color:#1a3a4a;white-space:nowrap;}
-.fev.m{border-color:rgba(255,200,0,.3);color:#ffcc00;}
-.fev.s{border-color:rgba(0,212,255,.2);color:#00d4ff;}
-.lbtns{display:flex;gap:4px;}
-.lb{width:32px;height:24px;background:rgba(0,16,24,.9);border:1px solid #0a2030;border-radius:3px;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:3px;outline:none;}
-.lb:focus,.lb:hover{border-color:#00d4ff;}
-.lb.on{border-color:#00d4ff;background:rgba(0,212,255,.1);}
-.lb svg{fill:#1a3a4a;}
-.lb.on svg,.lb:focus svg,.lb:hover svg{fill:#00d4ff;}
+/* ── SETUP OVERLAY ── */
+#setup {
+position:fixed; inset:0; background:#000;
+display:flex; align-items:center; justify-content:center;
+z-index:200;
+}
+#setup.hidden { display:none; }
 
-/* ALERT */
-.awrap{position:fixed;inset:0;z-index:150;pointer-events:none;display:flex;align-items:flex-start;justify-content:center;padding-top:68px;}
-.abanner{background:rgba(255,64,96,.1);border:1px solid #ff4060;border-radius:4px;padding:12px 36px;font-family:‘Orbitron’,sans-serif;font-size:16px;font-weight:700;letter-spacing:3px;color:#ff4060;display:none;}
-.abanner.show{display:block;}
+.card {
+width:88vw; max-width:860px;
+background:#06111f;
+border:3px solid #00e5ff;
+border-radius:12px;
+padding:30px 36px;
+box-shadow: 0 0 60px rgba(0,229,255,.2);
+}
 
-/* ══════════════════════════════════
-SETUP SCREEN — high contrast
-══════════════════════════════════ */
-.setup{position:fixed;inset:0;background:#000;display:flex;align-items:center;justify-content:center;z-index:200;}
-.setup.gone{display:none;}
+.card h1 {
+font-size:32px; letter-spacing:8px; text-align:center;
+color:#fff; margin-bottom:3px;
+}
+.card h1 span { color:#00e5ff; }
+.card .sub { font-size:9px; letter-spacing:5px; color:#224; text-align:center; margin-bottom:22px; }
 
-.card{width:86vw;max-width:880px;background:#06111f;border:3px solid #00d4ff;border-radius:12px;padding:32px 40px;box-shadow:0 0 60px rgba(0,212,255,.2);}
+/* PIN BOX */
+.pin-box {
+background:#000; border:3px solid #00e5ff;
+border-radius:10px; padding:18px 20px 14px;
+text-align:center; margin-bottom:18px;
+box-shadow:0 0 30px rgba(0,229,255,.15);
+}
+.pin-box .lbl { font-size:10px; letter-spacing:3px; color:#336; margin-bottom:10px; }
+.pin-digits { display:flex; align-items:center; justify-content:center; gap:8px; }
+.pin-pre { font-size:26px; font-weight:bold; color:#336; }
+.pin-d {
+font-size:62px; font-weight:900; color:#00e5ff;
+background:rgba(0,229,255,.08); border:2px solid rgba(0,229,255,.4);
+border-radius:8px; padding:4px 12px; min-width:68px; text-align:center;
+line-height:1; text-shadow:0 0 28px rgba(0,229,255,.8);
+}
+.pin-hint { font-size:11px; color:#336; margin-top:10px; }
+.pin-hint strong { color:#aac; }
 
-.ctitle{font-family:‘Orbitron’,sans-serif;font-size:34px;font-weight:900;letter-spacing:8px;text-align:center;color:#fff;margin-bottom:3px;}
-.ctitle span{color:#00d4ff;}
-.csub{font-size:10px;letter-spacing:5px;color:#1a4a6a;text-align:center;margin-bottom:24px;}
+/* Steps */
+.steps { display:flex; gap:6px; margin-bottom:16px; }
+.step { flex:1; background:rgba(0,229,255,.05); border:1px solid rgba(0,229,255,.15); border-radius:7px; padding:10px 8px; text-align:center; }
+.step .n { font-size:18px; font-weight:bold; color:#00e5ff; margin-bottom:4px; }
+.step .t { font-size:10px; color:#aac; line-height:1.5; }
+.step .t strong { color:#fff; }
 
-/* BIG PIN BOX */
-.pinbox{background:#000;border:3px solid #00d4ff;border-radius:10px;padding:18px 24px 14px;text-align:center;margin-bottom:18px;box-shadow:0 0 30px rgba(0,212,255,.15);}
-.pinbox-lbl{font-size:10px;letter-spacing:4px;color:#2a6a8a;margin-bottom:12px;}
-.pin-row{display:flex;align-items:center;justify-content:center;gap:8px;min-height:88px;}
-.pin-pre{font-family:‘Orbitron’,sans-serif;font-size:28px;font-weight:700;color:#2a6a8a;}
-.pin-d{font-family:‘Orbitron’,sans-serif;font-size:66px;font-weight:900;color:#00d4ff;line-height:1;background:rgba(0,212,255,.09);border:2px solid rgba(0,212,255,.4);border-radius:8px;padding:5px 13px;min-width:70px;text-align:center;text-shadow:0 0 28px rgba(0,212,255,.8);}
-.pin-wait{font-size:13px;letter-spacing:3px;color:#2a6a8a;}
-.pinbox-hint{font-size:11px;color:#2a6a8a;margin-top:10px;}
-.pinbox-hint strong{color:#c0d8e8;}
+/* Keyboard display */
+.kbd-disp {
+background:#000; border:2px solid #1a2a3a;
+border-radius:7px; padding:10px 14px;
+margin-bottom:9px; min-height:50px;
+display:flex; align-items:center; gap:5px;
+transition:border-color .15s;
+}
+.kbd-disp.on { border-color:#00e5ff; }
+.kbd-typed {
+font-size:22px; font-weight:bold; color:#00e5ff;
+letter-spacing:4px; flex:1;
+text-shadow:0 0 12px rgba(0,229,255,.5);
+}
+.cursor { width:3px; height:24px; background:#00e5ff; animation:cur .8s step-end infinite; }
+@keyframes cur { 0%,100%{opacity:1} 50%{opacity:0} }
 
-/* 4 steps */
-.steps4{display:flex;gap:7px;margin-bottom:16px;}
-.s4{flex:1;background:rgba(0,212,255,.05);border:1px solid rgba(0,212,255,.15);border-radius:7px;padding:10px 8px;text-align:center;}
-.s4-n{font-family:‘Orbitron’,sans-serif;font-size:18px;font-weight:900;color:#00d4ff;margin-bottom:4px;}
-.s4-t{font-size:10px;color:#b0ccd8;line-height:1.5;}
-.s4-t strong{color:#fff;}
+/* Keys */
+.keys { display:flex; gap:5px; justify-content:center; flex-wrap:wrap; }
+.k {
+min-width:56px; height:56px;
+background:#0c1a28; border:2px solid #1a3a54;
+border-radius:6px; font-family:‘Courier New’,monospace;
+font-size:20px; color:#6a9ab8;
+cursor:pointer; display:flex; align-items:center; justify-content:center;
+outline:3px solid transparent; outline-offset:2px;
+transition:all .1s;
+}
+.k:focus, .k:hover {
+background:rgba(0,229,255,.2); border-color:#00e5ff;
+color:#fff; outline-color:#00e5ff; transform:scale(1.06);
+}
+.k.del { min-width:74px; color:#ff5070; border-color:rgba(255,80,112,.35); font-size:14px; }
+.k.del:focus, .k.del:hover { background:rgba(255,80,112,.18); border-color:#ff5070; color:#ff5070; }
+.k.go {
+min-width:140px; background:#00e5ff; color:#000;
+border-color:#00e5ff; font-size:13px; font-weight:900; letter-spacing:2px;
+}
+.k.go:focus, .k.go:hover { background:#fff; }
 
-/* keyboard */
-.kdisp{background:#000;border:2px solid #0a2030;border-radius:7px;padding:10px 16px;margin-bottom:9px;min-height:50px;display:flex;align-items:center;gap:5px;transition:border-color .15s;}
-.kdisp.active{border-color:#00d4ff;}
-.ktyped{font-family:‘Orbitron’,sans-serif;font-size:24px;font-weight:700;color:#00d4ff;letter-spacing:4px;flex:1;text-shadow:0 0 14px rgba(0,212,255,.5);}
-.kcur{width:3px;height:26px;background:#00d4ff;flex-shrink:0;animation:bk .8s step-end infinite;}
-@keyframes bk{0%,100%{opacity:1}50%{opacity:0}}
+.status {
+text-align:center; font-size:11px; letter-spacing:2px;
+color:#336; min-height:20px; margin-top:8px;
+}
+.status.ok { color:#00ff88; }
+.status.err { color:#ff5070; }
 
-.kstrip{display:flex;gap:4px;justify-content:center;flex-wrap:wrap;}
-.kk{min-width:56px;height:56px;background:#0c1c2c;border:2px solid #1a3a54;border-radius:6px;font-family:‘Share Tech Mono’,monospace;font-size:21px;color:#7aaac8;cursor:pointer;display:flex;align-items:center;justify-content:center;outline:3px solid transparent;outline-offset:2px;transition:all .1s;}
-.kk:focus,.kk:hover{background:rgba(0,212,255,.2);border-color:#00d4ff;color:#fff;outline-color:#00d4ff;transform:scale(1.06);}
-.kk.del{min-width:76px;color:#ff6080;border-color:rgba(255,96,128,.35);font-size:15px;}
-.kk.del:focus,.kk.del:hover{background:rgba(255,96,128,.18);border-color:#ff6080;color:#ff6080;}
-.kk.go{min-width:140px;background:#00d4ff;color:#000;border-color:#00d4ff;font-family:‘Orbitron’,sans-serif;font-size:13px;font-weight:900;letter-spacing:2px;}
-.kk.go:focus,.kk.go:hover{background:#fff;}
+/* ── FOOTER ── */
+#footer {
+position:fixed; bottom:0; left:0; right:0; height:80px;
+background:rgba(0,0,0,.95); border-top:1px solid #0a1a2a;
+display:flex; align-items:center; justify-content:space-between;
+padding:0 28px; z-index:100;
+}
+.ftr-pin { display:flex; flex-direction:column; gap:1px; }
+.ftr-pin-l { font-size:7px; letter-spacing:2px; color:#224; }
+.ftr-pin-v { font-size:12px; color:#00e5ff; letter-spacing:2px; }
+.ftr-ev { display:flex; gap:5px; overflow:hidden; }
+.fev { padding:3px 10px; background:#0a1018; border:1px solid #0a1a2a; border-radius:2px; font-size:8px; color:#336; white-space:nowrap; }
+.fev.m { border-color:rgba(255,200,0,.3); color:#ffcc00; }
+.fev.s { border-color:rgba(0,229,255,.2); color:#00e5ff; }
+.lbtns { display:flex; gap:4px; align-items:center; }
+.lb { width:36px; height:26px; background:#0a1018; border:1px solid #0a1a2a; border-radius:3px; cursor:pointer; display:flex; align-items:center; justify-content:center; padding:3px; outline:none; }
+.lb:focus, .lb:hover { border-color:#00e5ff; }
+.lb.on { border-color:#00e5ff; background:rgba(0,229,255,.1); }
+.lb svg { fill:#224; }
+.lb.on svg, .lb:focus svg, .lb:hover svg { fill:#00e5ff; }
 
-.sstatus{text-align:center;font-size:11px;letter-spacing:2px;color:#2a6a8a;min-height:20px;margin-top:8px;}
-.sstatus.ok{color:#00ff7f;}
-.sstatus.err{color:#ff4060;}
-
-#mcanvas{display:none;}
+#mcanvas { display:none; }
 </style>
 
 </head>
 <body>
 
-<!-- SETUP -->
+<!-- FEEDS -->
 
-<div class="setup" id="setup">
+<div id="feeds" class="n1"></div>
+
+<!-- SETUP OVERLAY -->
+
+<div id="setup">
   <div class="card">
-    <div class="ctitle">SENTI<span>NEL</span></div>
-    <div class="csub">TV · CCTV MONITOR</div>
+    <h1>SENTI<span>NEL</span></h1>
+    <p class="sub">TV · CCTV MONITOR</p>
 
 ```
-<div class="pinbox">
-  <div class="pinbox-lbl">YOUR TV PIN — TYPE THIS ON YOUR PHONE</div>
-  <div class="pin-row" id="pinRow"><span class="pin-wait" id="pinWait">Generating…</span></div>
-  <div class="pinbox-hint">Open <strong>sentinel-cam.html</strong> → START CAMERA → enter PIN → STREAM →</div>
+<div class="pin-box">
+  <div class="lbl">YOUR TV PIN — TYPE THIS ON YOUR PHONE</div>
+  <div class="pin-digits" id="pinDigits">
+    <span style="color:#336;font-size:14px;letter-spacing:2px">Generating…</span>
+  </div>
+  <div class="pin-hint">Open <strong>sentinel-cam.html</strong> on phone → START → type this PIN → STREAM →</div>
 </div>
 
-<div class="steps4">
-  <div class="s4"><div class="s4-n">1</div><div class="s4-t">Open <strong>sentinel-cam.html</strong> on phone</div></div>
-  <div class="s4"><div class="s4-n">2</div><div class="s4-t">Tap <strong>START CAMERA</strong></div></div>
-  <div class="s4"><div class="s4-n">3</div><div class="s4-t">Type <strong>PIN above</strong> in Stream field</div></div>
-  <div class="s4"><div class="s4-n">4</div><div class="s4-t">Tap <strong>STREAM →</strong></div></div>
+<div class="steps">
+  <div class="step"><div class="n">1</div><div class="t">Open <strong>sentinel-cam.html</strong> on phone</div></div>
+  <div class="step"><div class="n">2</div><div class="t">Tap <strong>START CAMERA</strong></div></div>
+  <div class="step"><div class="n">3</div><div class="t">Type <strong>PIN above</strong> in Stream field</div></div>
+  <div class="step"><div class="n">4</div><div class="t">Tap <strong>STREAM →</strong></div></div>
 </div>
 
-<div class="kdisp" id="kdisp"><div class="ktyped" id="ktyped"></div><div class="kcur"></div></div>
-<div class="kstrip">
-  <button class="kk" onclick="kt('S')">S</button><button class="kk" onclick="kt('N')">N</button>
-  <button class="kk" onclick="kt('T')">T</button><button class="kk" onclick="kt('-')">-</button>
-  <button class="kk" onclick="kt('1')">1</button><button class="kk" onclick="kt('2')">2</button>
-  <button class="kk" onclick="kt('3')">3</button><button class="kk" onclick="kt('4')">4</button>
-  <button class="kk" onclick="kt('5')">5</button><button class="kk" onclick="kt('6')">6</button>
-  <button class="kk" onclick="kt('7')">7</button><button class="kk" onclick="kt('8')">8</button>
-  <button class="kk" onclick="kt('9')">9</button><button class="kk" onclick="kt('0')">0</button>
-  <button class="kk del" onclick="kb()">⌫ DEL</button>
-  <button class="kk go" onclick="connectCam()">▶ CONNECT</button>
+<div class="kbd-disp" id="kdisp">
+  <div class="kbd-typed" id="ktyped"></div>
+  <div class="cursor"></div>
 </div>
-<div class="sstatus" id="sstatus"></div>
+
+<div class="keys">
+  <button class="k" onclick="kt('S')">S</button>
+  <button class="k" onclick="kt('N')">N</button>
+  <button class="k" onclick="kt('T')">T</button>
+  <button class="k" onclick="kt('-')">-</button>
+  <button class="k" onclick="kt('1')">1</button>
+  <button class="k" onclick="kt('2')">2</button>
+  <button class="k" onclick="kt('3')">3</button>
+  <button class="k" onclick="kt('4')">4</button>
+  <button class="k" onclick="kt('5')">5</button>
+  <button class="k" onclick="kt('6')">6</button>
+  <button class="k" onclick="kt('7')">7</button>
+  <button class="k" onclick="kt('8')">8</button>
+  <button class="k" onclick="kt('9')">9</button>
+  <button class="k" onclick="kt('0')">0</button>
+  <button class="k del" onclick="kb()">⌫ DEL</button>
+  <button class="k go" onclick="connectCam()">▶ CONNECT</button>
+</div>
+
+<div class="status" id="status"></div>
 ```
 
   </div>
 </div>
 
-<!-- MAIN -->
+<!-- FOOTER -->
 
-<header class="hdr">
-  <div class="logo">SENTI<span>NEL</span></div>
-  <div class="hstats">
-    <div class="hs"><div class="hs-n" id="stC">0</div><div class="hs-l">CAMERAS</div></div>
-    <div class="hdv"></div>
-    <div class="hs"><div class="hs-n r" id="stP">0</div><div class="hs-l">PERSONS</div></div>
-    <div class="hdv"></div>
-    <div class="hs"><div class="hs-n" id="stM">0</div><div class="hs-l">MOTION</div></div>
-    <div class="hdv"></div>
-    <div class="hs"><div class="hs-n" id="stU">00:00</div><div class="hs-l">UPTIME</div></div>
+<div id="footer">
+  <div class="ftr-pin">
+    <div class="ftr-pin-l">TV PIN</div>
+    <div class="ftr-pin-v" id="ftrPin">—</div>
   </div>
-  <div style="display:flex;gap:14px;align-items:center;">
-    <div class="lpill" id="lpill"><div class="d"></div><span id="lpillTxt">WAITING</span></div>
-    <div class="clk" id="clk">--:--:--</div>
-  </div>
-</header>
-
-<div class="feeds l1" id="feeds"></div>
-
-<footer class="ftr">
-  <div class="ftr-pin"><div class="ftr-pin-l">TV PIN</div><div class="ftr-pin-v" id="ftrPin">—</div></div>
   <div class="ftr-ev" id="ftrEv"></div>
   <div class="lbtns">
     <button class="lb on" id="lb1" onclick="setLayout(1)"><svg viewBox="0 0 18 14" width="16"><rect x="1" y="1" width="16" height="12" rx="1"/></svg></button>
     <button class="lb" id="lb2" onclick="setLayout(2)"><svg viewBox="0 0 18 14" width="16"><rect x="1" y="1" width="7" height="12" rx="1"/><rect x="10" y="1" width="7" height="12" rx="1"/></svg></button>
     <button class="lb" id="lb4" onclick="setLayout(4)"><svg viewBox="0 0 18 14" width="16"><rect x="1" y="1" width="7" height="5" rx="1"/><rect x="10" y="1" width="7" height="5" rx="1"/><rect x="1" y="8" width="7" height="5" rx="1"/><rect x="10" y="8" width="7" height="5" rx="1"/></svg></button>
-    <button class="lb" onclick="showSetup()" style="border-color:rgba(0,255,127,.4);"><svg viewBox="0 0 18 18" width="16"><path d="M9 3v12M3 9h12" stroke="#00ff7f" stroke-width="2.5" stroke-linecap="round"/></svg></button>
+    <button class="lb" onclick="document.getElementById('setup').classList.remove('hidden')" style="border-color:rgba(0,255,136,.4)"><svg viewBox="0 0 18 18" width="16"><path d="M9 3v12M3 9h12" stroke="#00ff88" stroke-width="2.5" stroke-linecap="round"/></svg></button>
   </div>
-</footer>
+</div>
 
-<div class="awrap"><div class="abanner" id="abanner"></div></div>
 <canvas id="mcanvas"></canvas>
 
 <script>
-// ══════════════════════════════════════════════════════
-//  SENTINEL TV  —  Zero PeerJS, Zero WebSocket
-//  Signaling via ntfy.sh (pure HTTPS fetch polling)
-//  WebRTC connects peer-to-peer after signaling
-// ══════════════════════════════════════════════════════
+// ════════════════════════════════════════════
+//  SENTINEL TV
+//  Signaling: Firebase REST (pure HTTPS fetch)
+//  NO PeerJS, NO WebSocket, NO external libs
+// ════════════════════════════════════════════
 
-const NTFY = 'https://ntfy.sh';
+const FB = 'https://sentinal-cam-default-rtdb.asia-southeast1.firebasedatabase.app';
 
-const S = {
+const T = {
   pin: null,
-  cams: [], conns: {},
+  cams: [],
+  peers: {},
   motionEvt: 0,
-  startTime: null, uptimeIv: null,
-  alertT: null, layout: 1, motionOn: true, animId: null
+  startTime: null,
+  motionOn: true,
+  animId: null,
+  layout: 1
 };
 
-// ── Generate & show PIN immediately ──
+// ── Firebase helpers ──
+async function fbSet(path, data) {
+  try {
+    await fetch(`${FB}/${path}.json`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+  } catch(e) {}
+}
+async function fbGet(path) {
+  try {
+    const r = await fetch(`${FB}/${path}.json`);
+    if (!r.ok) return null;
+    const j = await r.json();
+    return j;
+  } catch(e) { return null; }
+}
+async function fbDelete(path) {
+  try { await fetch(`${FB}/${path}.json`, { method: 'DELETE' }); } catch(e) {}
+}
+
+// ── Send a message to someone's inbox ──
+async function send(toPin, msg) {
+  const key = Date.now() + '_' + Math.random().toString(36).slice(2,6);
+  await fbSet(`inbox/${toPin}/${key}`, { ...msg, from: T.pin });
+}
+
+// ── Generate PIN & start ──
 function init() {
-  S.pin = 'SNT-' + Math.floor(1000 + Math.random() * 9000);
-  renderPin(S.pin);
-  document.getElementById('ftrPin').textContent = S.pin;
-  setSt('ok', '✅ Ready — type this PIN on your phone');
+  T.pin = 'SNT-' + Math.floor(1000 + Math.random() * 9000);
+  showPin(T.pin);
+  document.getElementById('ftrPin').textContent = T.pin;
+  setSt('ok', '✅ Ready — type the PIN above on your phone');
   startPolling();
 }
 
-// ── RECEIVE OFFER from cam (cam typed our TV PIN) ──
-async function receiveOffer(camPin, offerSdp) {
-  setSt('', `📡 Camera connecting…`);
-
-  const pc = new RTCPeerConnection({
-    iceServers: [
-      {urls:'stun:stun.l.google.com:19302'},
-      {urls:'stun:stun1.l.google.com:19302'},
-      {urls:'stun:stun2.l.google.com:19302'},
-    ]
-  });
-  S.conns[camPin] = pc;
-
-  const iceQueue = [];
-  let iceTimer = null;
-  pc.onicecandidate = e => {
-    if (!e.candidate) return;
-    iceQueue.push(e.candidate.toJSON());
-    clearTimeout(iceTimer);
-    iceTimer = setTimeout(async () => {
-      // Send our ICE to cam's inbox
-      await ntfyPost(`snt-to-${camPin}`, { type:'ice-batch', tvPin: S.pin, candidates: iceQueue.splice(0) });
-    }, 400);
-  };
-
-  pc.ontrack = e => {
-    if (!e.streams || !e.streams[0]) return;
-    if (e.streams[0].getVideoTracks().length === 0) return;
-    const label = `CAM-${S.cams.length + 1}`;
-    addCam(camPin, e.streams[0], label);
-    document.getElementById('setup').classList.add('gone');
-    setSt('ok', `✅ ${label} connected`);
-    ftrLog('s', `📡 ${label} connected`);
-  };
-
-  pc.onconnectionstatechange = () => {
-    if (pc.connectionState==='disconnected'||pc.connectionState==='failed') {
-      removeCam(camPin); delete S.conns[camPin];
-    }
-  };
-
-  await pc.setRemoteDescription({ type:'offer', sdp: offerSdp });
-  const answer = await pc.createAnswer();
-  await pc.setLocalDescription(answer);
-
-  // Send answer to cam's inbox: snt-to-{camPin}
-  await ntfyPost(`snt-to-${camPin}`, { type:'answer', tvPin: S.pin, sdp: pc.localDescription.sdp });
+function showPin(pin) {
+  const digits = pin.replace('SNT-','');
+  document.getElementById('pinDigits').innerHTML =
+    `<span class="pin-pre">SNT-</span>` +
+    digits.split('').map(d => `<span class="pin-d">${d}</span>`).join('');
 }
 
-// ── CONNECT CAM MANUALLY: TV types cam PIN and calls it ──
-async function connectCam() {
-  const camPin = kbdVal.trim().toUpperCase();
-  if (!camPin) { setSt('err', 'Type a camera PIN first'); return; }
-  kc();
-  setSt('', `Calling ${camPin}…`);
+// ── Poll TV's inbox ──
+function startPolling() {
+  setInterval(async () => {
+    const inbox = await fbGet(`inbox/${T.pin}`);
+    if (!inbox) return;
 
-  const pc = new RTCPeerConnection({
-    iceServers: [
-      {urls:'stun:stun.l.google.com:19302'},
-      {urls:'stun:stun1.l.google.com:19302'},
-    ]
-  });
-
-  const camId = camPin;
-  S.conns[camId] = pc;
-
-  const myIce = [];
-  let iceFlush = null;
-  pc.onicecandidate = e => {
-    if (!e.candidate) return;
-    myIce.push(e.candidate.toJSON());
-    clearTimeout(iceFlush);
-    iceFlush = setTimeout(async () => {
-      await ntfyPost(`snt-to-${camPin}`, { type:'ice-batch', tvPin: S.pin, candidates: myIce.splice(0) });
-    }, 400);
-  };
-
-  pc.ontrack = e => {
-    if (!e.streams || !e.streams[0]) return;
-    const stream = e.streams[0];
-    if (stream.getVideoTracks().length === 0) return;
-    const label = `CAM-${S.cams.length + 1}`;
-    addCam(camPin, e.streams[0], label);
-    document.getElementById('setup').classList.add('gone');
-    setSt('ok', `✅ ${label} connected`);
-    ftrLog('s', `📡 ${label} connected`);
-  };
-
-  pc.addTransceiver('video', { direction:'recvonly' });
-  pc.addTransceiver('audio', { direction:'recvonly' });
-
-  const offer = await pc.createOffer();
-  await pc.setLocalDescription(offer);
-
-  // Post offer to cam's inbox: snt-to-{camPin}
-  await ntfyPost(`snt-to-${camPin}`, {
-    type:'offer', tvPin: S.pin, sdp: pc.localDescription.sdp
-  });
-
-  setSt('', 'Offer sent — waiting for camera…');
-
-  // Poll TV's own inbox for cam's answer
-  let tries = 0;
-  const seenAns = new Set();
-  const answerIv = setInterval(async () => {
-    if (++tries > 40) { clearInterval(answerIv); setSt('err','No response — is cam page open and started?'); return; }
-    const msgs = await ntfyPoll(`snt-to-${S.pin}`, '60s');
-    for (const ev of msgs) {
-      if (seenAns.has(ev.id)) continue;
-      seenAns.add(ev.id);
+    for (const [key, msg] of Object.entries(inbox)) {
+      await fbDelete(`inbox/${T.pin}/${key}`);
       try {
-        const data = JSON.parse(ev.message || 'null');
-        if (!data) continue;
-        if (data.type === 'answer' && data.camPin === camPin) {
-          clearInterval(answerIv);
-          await pc.setRemoteDescription({ type:'answer', sdp: data.sdp });
-          setSt('ok', 'Answer received — connecting…');
-        } else if (data.type === 'ice-batch') {
-          for (const c of (data.candidates||[])) { try { await pc.addIceCandidate(new RTCIceCandidate(c)); } catch(e){} }
+        if (msg.type === 'offer' && msg.from && !T.peers[msg.from]) {
+          receiveOffer(msg.from, msg.sdp);
+        } else if (msg.type === 'answer' && msg.from && T.peers[msg.from]) {
+          await T.peers[msg.from].setRemoteDescription({ type:'answer', sdp: msg.sdp });
+        } else if (msg.type === 'ice' && msg.from && T.peers[msg.from]) {
+          await T.peers[msg.from].addIceCandidate(new RTCIceCandidate(msg.candidate)).catch(()=>{});
         }
       } catch(e) {}
     }
   }, 2000);
 }
 
-// ── ntfy helpers ──
-async function ntfyPost(channel, data) {
-  try {
-    await fetch(`${NTFY}/${channel}`, {
-      method:'POST',
-      headers:{'Content-Type':'text/plain'},
-      body: JSON.stringify(data)
-    });
-  } catch(e) {}
+// ── Receive offer from cam ──
+async function receiveOffer(camPin, offerSdp) {
+  setSt('', `📡 Camera connecting…`);
+  const pc = makePeer(camPin);
+  await pc.setRemoteDescription({ type:'offer', sdp: offerSdp });
+  const answer = await pc.createAnswer();
+  await pc.setLocalDescription(answer);
+  await send(camPin, { type:'answer', sdp: pc.localDescription.sdp });
 }
 
-async function ntfyPoll(channel, since) {
-  try {
-    const r = await fetch(`${NTFY}/${channel}/json?poll=1&since=${since}`, { headers:{Accept:'application/x-ndjson'} });
-    if (!r.ok) return [];
-    const txt = await r.text();
-    if (!txt.trim()) return [];
-    return txt.trim().split('\n').map(l => { try { return JSON.parse(l); } catch(e) { return null; }}).filter(Boolean);
-  } catch(e) { return []; }
+// ── TV calls cam by typing its PIN ──
+async function connectCam() {
+  const camPin = kbdVal.trim().toUpperCase();
+  if (!camPin || !camPin.startsWith('SNT-')) { setSt('err','Type a camera PIN like SNT-1234'); return; }
+  if (T.peers[camPin]) { setSt('err','Already connected to '+camPin); return; }
+  kc();
+  setSt('', `Calling ${camPin}…`);
+
+  const pc = makePeer(camPin);
+  pc.addTransceiver('video', { direction:'recvonly' });
+  pc.addTransceiver('audio', { direction:'recvonly' });
+
+  const offer = await pc.createOffer();
+  await pc.setLocalDescription(offer);
+  await send(camPin, { type:'offer', sdp: pc.localDescription.sdp });
+  setSt('', 'Offer sent — waiting for camera…');
 }
 
-// ── Generate PIN & show immediately ──
-function init() {
-  S.pin = 'SNT-' + Math.floor(1000 + Math.random() * 9000);
-  renderPin(S.pin);
-  document.getElementById('ftrPin').textContent = S.pin;
-  setSt('ok', '✅ Ready — type PIN ' + S.pin + ' on your phone');
-  startPolling();
-}
+// ── Create RTCPeerConnection ──
+function makePeer(remotePin) {
+  const pc = new RTCPeerConnection({
+    iceServers: [
+      { urls:'stun:stun.l.google.com:19302' },
+      { urls:'stun:stun1.l.google.com:19302' },
+      { urls:'stun:stun2.l.google.com:19302' },
+      { urls:'stun:stun3.l.google.com:19302' },
+    ]
+  });
+  T.peers[remotePin] = pc;
 
-function renderPin(pin) {
-  const digits = pin.replace('SNT-', '');
-  document.getElementById('pinRow').innerHTML =
-    `<span class="pin-pre">SNT-</span>` +
-    digits.split('').map(d => `<span class="pin-d">${d}</span>`).join('');
-}
+  pc.onicecandidate = e => {
+    if (e.candidate) send(remotePin, { type:'ice', candidate: e.candidate.toJSON() });
+  };
 
-// ── POLL TV's own inbox: snt-to-{tvPin} ──
-let tvSeenIds = new Set();
+  pc.ontrack = e => {
+    if (!e.streams || !e.streams[0]) return;
+    const stream = e.streams[0];
+    if (!stream.getVideoTracks().length) return;
+    const label = `CAM-${T.cams.length + 1}`;
+    addCamCell(remotePin, stream, label);
+    document.getElementById('setup').classList.add('hidden');
+    setSt('ok', `✅ ${label} connected`);
+    ftrLog('s', `📡 ${label}`);
+  };
 
-function startPolling() {
-  setInterval(async () => {
-    const msgs = await ntfyPoll(`snt-to-${S.pin}`, '60s');
-    for (const ev of msgs) {
-      if (tvSeenIds.has(ev.id)) continue;
-      tvSeenIds.add(ev.id);
-      try {
-        const data = JSON.parse(ev.message || 'null');
-        if (!data) continue;
-        if (data.type === 'offer' && data.camPin && !S.conns[data.camPin]) {
-          receiveOffer(data.camPin, data.sdp);
-        } else if (data.type === 'ice-batch' && data.camPin && S.conns[data.camPin]) {
-          const pc = S.conns[data.camPin];
-          for (const c of (data.candidates||[])) {
-            try { await pc.addIceCandidate(new RTCIceCandidate(c)); } catch(e){}
-          }
-        }
-      } catch(e) {}
+  pc.onconnectionstatechange = () => {
+    if (pc.connectionState === 'connected') {
+      setSt('ok', '✅ Streaming live');
     }
-  }, 2500);
+    if (pc.connectionState === 'disconnected' || pc.connectionState === 'failed') {
+      removeCamCell(remotePin);
+      delete T.peers[remotePin];
+    }
+  };
+
+  return pc;
 }
 
-// ── ADD CAM CELL ──
-function addCam(id, stream, label) {
-  const g = document.getElementById('feeds');
-  const cell = document.createElement('div');
-  cell.className = 'cam'; cell.id = `cam-${id}`;
-  cell.innerHTML = `
+// ── Add/remove cam cell ──
+function addCamCell(id, stream, label) {
+  const feeds = document.getElementById('feeds');
+  const div = document.createElement('div');
+  div.className = 'cam'; div.id = `cam-${id}`;
+  div.innerHTML = `
     <video id="v-${id}" autoplay muted playsinline webkit-playsinline></video>
-    <div class="cam-hud">
-      <div class="cc tl"></div><div class="cc tr"></div>
-      <div class="cc bl"></div><div class="cc br"></div>
-      <div class="cam-live"><div class="ld"></div>LIVE</div>
-      <div class="cam-lbl">${label}</div>
-      <div class="cam-ts" id="ts-${id}">${T()}</div>
-    </div>
+    <div class="cam-live"><div class="d"></div>LIVE</div>
+    <div class="cam-label">${label}</div>
+    <div class="cc tl"></div><div class="cc tr"></div>
+    <div class="cc bl"></div><div class="cc br"></div>
     <div class="mfl" id="mf-${id}"></div>`;
-  g.appendChild(cell);
+  feeds.appendChild(div);
 
   const vid = document.getElementById(`v-${id}`);
-
-  function play() {
+  function tryPlay() {
     vid.muted = true;
     const p = vid.play();
-    if (p && p.catch) p.catch(() => setTimeout(play, 700));
+    if (p && p.catch) p.catch(() => setTimeout(tryPlay, 800));
   }
-
-  vid.onloadedmetadata = play;
-  vid.oncanplay = play;
+  vid.onloadedmetadata = tryPlay;
+  vid.oncanplay = tryPlay;
   vid.srcObject = stream;
   vid.muted = true;
-  play();
+  tryPlay();
 
-  // Watchdog every 4s
-  setInterval(() => {
-    if (document.getElementById(`v-${id}`) && vid.paused && vid.readyState >= 2) {
-      vid.muted = true; vid.play().catch(()=>{});
-    }
-  }, 4000);
+  // Watchdog every 3s
+  const wd = setInterval(() => {
+    if (!document.getElementById(`v-${id}`)) { clearInterval(wd); return; }
+    if (vid.paused && vid.readyState >= 2) { vid.muted=true; vid.play().catch(()=>{}); }
+  }, 3000);
 
-  S.cams.push({ id, stream, label, vid, cell, mfl: document.getElementById(`mf-${id}`), prevFrame:null, lastMotion:0 });
-  if (!S.startTime) startUptime();
-  updateLayout(); updateStats();
-  if (!S.animId) motionLoop();
+  T.cams.push({ id, stream, label, vid, mfl: document.getElementById(`mf-${id}`), prevFrame:null, lastMotion:0 });
+  if (!T.startTime) { T.startTime = Date.now(); startUptime(); }
+  updateFeedsLayout();
+  if (!T.animId) motionLoop();
 }
 
-function removeCam(id) {
-  S.cams = S.cams.filter(c => c.id !== id);
+function removeCamCell(id) {
+  T.cams = T.cams.filter(c => c.id !== id);
   const el = document.getElementById(`cam-${id}`);
   if (el) el.remove();
-  if (S.conns[id]) { try { S.conns[id].pc.close(); } catch(e){} delete S.conns[id]; }
-  updateLayout(); updateStats();
+  updateFeedsLayout();
 }
 
-// ── MOTION ──
+// ── Motion detection ──
 function motionLoop() {
   const mc = document.getElementById('mcanvas');
   const mx = mc.getContext('2d');
   function loop() {
-    S.cams.forEach(cam => {
+    T.cams.forEach(cam => {
       const v = cam.vid;
       if (!v || v.readyState < 2 || !v.videoWidth) return;
       mc.width = v.videoWidth; mc.height = v.videoHeight;
       mx.drawImage(v, 0, 0, mc.width, mc.height);
       const fr = mx.getImageData(0, 0, mc.width, mc.height);
-      if (cam.prevFrame && S.motionOn) {
+      if (cam.prevFrame) {
         let d=0, n=0;
         for (let i=0; i<fr.data.length; i+=20) {
-          if ((Math.abs(fr.data[i]-cam.prevFrame.data[i])+Math.abs(fr.data[i+1]-cam.prevFrame.data[i+1])+Math.abs(fr.data[i+2]-cam.prevFrame.data[i+2]))/3 > 22) d++;
+          const diff = (Math.abs(fr.data[i]-cam.prevFrame.data[i]) + Math.abs(fr.data[i+1]-cam.prevFrame.data[i+1]) + Math.abs(fr.data[i+2]-cam.prevFrame.data[i+2])) / 3;
+          if (diff > 22) d++;
           n++;
         }
         if ((d/n)*100 > 14) {
           const now = Date.now();
           if (now - cam.lastMotion > 3500) {
-            cam.lastMotion = now; S.motionEvt++;
-            document.getElementById('stM').textContent = S.motionEvt;
-            cam.mfl.classList.add('on'); setTimeout(()=>cam.mfl.classList.remove('on'),250);
-            cam.cell.classList.add('alerted'); setTimeout(()=>cam.cell.classList.remove('alerted'),3000);
-            showAlert(`⚡ MOTION — ${cam.label}`);
+            cam.lastMotion = now; T.motionEvt++;
+            cam.mfl.classList.add('on'); setTimeout(() => cam.mfl.classList.remove('on'), 250);
             ftrLog('m', `Motion · ${cam.label}`);
           }
         }
       }
       cam.prevFrame = fr;
     });
-    S.animId = requestAnimationFrame(loop);
+    T.animId = requestAnimationFrame(loop);
   }
   loop();
 }
 
-// ── LAYOUT ──
+// ── Layout ──
 function setLayout(n) {
-  S.layout = n;
+  T.layout = n;
   ['lb1','lb2','lb4'].forEach(id => document.getElementById(id).classList.remove('on'));
-  const m={1:'lb1',2:'lb2',4:'lb4'}; if(m[n]) document.getElementById(m[n]).classList.add('on');
-  updateLayout();
+  const m = {1:'lb1',2:'lb2',4:'lb4'};
+  if (m[n]) document.getElementById(m[n]).classList.add('on');
+  updateFeedsLayout();
 }
-function updateLayout() {
-  const g = document.getElementById('feeds'), n = S.cams.length, l = S.layout;
-  g.className = `feeds ${n<=1?'l1':l===4||n>=3?'l4':l===2||n===2?'l2':'l1'}`;
+function updateFeedsLayout() {
+  const n = T.cams.length;
+  document.getElementById('feeds').className = `n${n<=1?1:n<=2?2:n<=3?3:4}`;
 }
 
-// ── STATS ──
-function updateStats() {
-  document.getElementById('stC').textContent = S.cams.length;
-  const pill = document.getElementById('lpill'), lbl = document.getElementById('lpillTxt');
-  if (S.cams.length>0) { pill.classList.add('live'); lbl.textContent=`${S.cams.length} LIVE`; }
-  else { pill.classList.remove('live'); lbl.textContent='WAITING'; }
-}
+// ── Uptime ──
 function startUptime() {
-  S.startTime = Date.now();
-  S.uptimeIv = setInterval(()=>{
-    const s=Math.floor((Date.now()-S.startTime)/1000);
-    document.getElementById('stU').textContent=`${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;
-  },1000);
+  setInterval(() => {
+    const s = Math.floor((Date.now()-T.startTime)/1000);
+    // Could add uptime display here
+  }, 1000);
 }
 
-// ── KEYBOARD ──
-let kbdVal='';
-function kt(ch){kbdVal+=ch.toUpperCase();rk();}
-function kb(){kbdVal=kbdVal.slice(0,-1);rk();}
-function kc(){kbdVal='';rk();}
-function rk(){
-  document.getElementById('ktyped').textContent=kbdVal;
-  document.getElementById('kdisp').classList.toggle('active',kbdVal.length>0);
+// ── Footer log ──
+function ftrLog(type, msg) {
+  const bar = document.getElementById('ftrEv');
+  const d = document.createElement('div');
+  d.className = `fev ${type}`; d.textContent = msg;
+  bar.insertBefore(d, bar.firstChild);
+  while (bar.children.length > 4) bar.removeChild(bar.lastChild);
 }
 
-// ── MISC ──
-function T(){return new Date().toLocaleTimeString('en-GB');}
-function showAlert(msg){const b=document.getElementById('abanner');b.textContent=msg;b.classList.add('show');clearTimeout(S.alertT);S.alertT=setTimeout(()=>b.classList.remove('show'),5000);}
-function ftrLog(t,msg){const bar=document.getElementById('ftrEv');const d=document.createElement('div');d.className=`fev ${t}`;d.textContent=msg;bar.insertBefore(d,bar.firstChild);while(bar.children.length>4)bar.removeChild(bar.lastChild);}
-function setSt(cls,msg){const e=document.getElementById('sstatus');e.className=`sstatus${cls?' '+cls:''}`;e.textContent=msg;}
-function showSetup(){document.getElementById('setup').classList.remove('gone');}
+// ── Status ──
+function setSt(cls, msg) {
+  const el = document.getElementById('status');
+  el.className = `status${cls?' '+cls:''}`;
+  el.textContent = msg;
+}
 
-// Clock
-setInterval(()=>{
-  const t=T();
-  document.getElementById('clk').textContent=t;
-  S.cams.forEach(c=>{const e=document.getElementById(`ts-${c.id}`);if(e)e.textContent=t;});
-},1000);
+// ── Keyboard ──
+let kbdVal = '';
+function kt(ch) { kbdVal += ch.toUpperCase(); rk(); }
+function kb() { kbdVal = kbdVal.slice(0,-1); rk(); }
+function kc() { kbdVal = ''; rk(); }
+function rk() {
+  document.getElementById('ktyped').textContent = kbdVal;
+  document.getElementById('kdisp').classList.toggle('on', kbdVal.length > 0);
+}
 
-// Key nav
-document.addEventListener('keydown',e=>{
-  const open=!document.getElementById('setup').classList.contains('gone');
-  if(open){
-    if(/^[SNT0-9\-]$/i.test(e.key)){kt(e.key);return;}
-    if(e.key==='Backspace'){kb();return;}
-    if(e.key==='Enter'){connectCam();return;}
-    if(e.key==='Escape'){document.getElementById('setup').classList.add('gone');return;}
+// ── Clock ──
+setInterval(() => {
+  // nothing needed — kept simple
+}, 1000);
+
+// ── Key nav ──
+document.addEventListener('keydown', e => {
+  const setupHidden = document.getElementById('setup').classList.contains('hidden');
+  if (!setupHidden) {
+    if (/^[SNT0-9\-]$/i.test(e.key)) { kt(e.key); return; }
+    if (e.key === 'Backspace') { kb(); return; }
+    if (e.key === 'Enter') { connectCam(); return; }
+    if (e.key === 'Escape') { document.getElementById('setup').classList.add('hidden'); return; }
   } else {
-    if(e.key==='1')setLayout(1);
-    if(e.key==='2')setLayout(2);
-    if(e.key==='4')setLayout(4);
-    if(e.key==='a'||e.key==='A')showSetup();
+    if (e.key === '1') setLayout(1);
+    if (e.key === '2') setLayout(2);
+    if (e.key === '4') setLayout(4);
+    if (e.key === 'a' || e.key === 'A') document.getElementById('setup').classList.remove('hidden');
   }
 });
 
