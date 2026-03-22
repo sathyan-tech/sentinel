@@ -261,9 +261,9 @@ z-index:500;display:none;white-space:nowrap;
   <!-- Connect to viewer / TV -->
 
   <div class="connect-section">
-    <div class="id-label">STREAM TO — VIEWER ID or TV DISPLAY ID</div>
+    <div class="id-label">STREAM TO — TV PIN (e.g. SNT-7342) or VIEWER ID</div>
     <div class="connect-row">
-      <input class="connect-input" id="viewerIdInput" placeholder="Paste Viewer ID or TV Display ID…" autocomplete="off">
+      <input class="connect-input" id="viewerIdInput" placeholder="e.g. SNT-7342 or paste Viewer ID…" autocomplete="off">
       <button class="cbtn cta" onclick="connectToViewer()">STREAM →</button>
     </div>
   </div>
@@ -295,14 +295,23 @@ setInterval(()=>{ document.getElementById('hudTime').textContent = new Date().to
 
 // ─── PEER INIT ───
 function initPeer() {
-  S.peer = new Peer({ debug: 0 });
+  const pin = 'SNT-' + Math.floor(1000 + Math.random() * 9000);
+  S.peer = new Peer(pin, { debug: 0 });
   S.peer.on('open', id => {
     S.myId = id;
     document.getElementById('myCamId').textContent = id;
-    log(`Ready`, `Camera ID: ${id.slice(0,10)}…`);
+    log(`Ready`, `Camera PIN: ${id}`);
+  });
+  S.peer.on('error', e => {
+    if (e.type === 'unavailable-id') {
+      S.peer.destroy();
+      initPeer(); // retry with new PIN
+    } else {
+      log('Peer error', e.message);
+    }
   });
 
-  // Viewer called us — they want our stream
+  // Viewer/TV called us — they want our stream
   S.peer.on('call', call => {
     if (!S.stream) {
       log('Viewer tried to connect — start camera first','');
@@ -316,8 +325,6 @@ function initPeer() {
     log(`Viewer connected`, call.peer.slice(0,10)+'…');
     updateStreamStatus();
   });
-
-  S.peer.on('error', e => log('Peer error', e.message));
 }
 
 // ─── ENUMERATE CAMERAS ───
