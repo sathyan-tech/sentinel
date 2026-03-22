@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>SENTINEL — Camera</title>
+<script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow+Condensed:wght@700;900&display=swap');
+
+:root {
+–bg:#070a0f; –panel:#0d1117; –border:#1e2d3d;
+–accent:#00e5ff; –accent2:#ff3d71; –accent3:#00ff88; –warn:#ffaa00;
+–text:#c9d4e0; –dim:#4a6070;
+–mono:‘Share Tech Mono’,monospace; –cond:‘Barlow Condensed’,sans-serif;
+}
+
+*{margin:0;padding:0;box-sizing:border-box;}
+
+body {
+background:var(–bg); color:var(–text);
+font-family:var(–mono);
+min-height:100vh; min-height:100dvh;
+display:flex; flex-direction:column;
+overflow:hidden;
+}
+
+body::before {
+content:’’; position:fixed; inset:0;
+background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,229,255,.012) 2px,rgba(0,229,255,.012) 4px);
+pointer-events:none; z-index:9999;
+}
+
+/* HEADER */
+header {
+display:flex; align-items:center; justify-content:space-between;
+padding:10px 16px;
+background:var(–panel);
+border-bottom:1px solid var(–border);
+flex-shrink:0;
+}
+
+.logo { display:flex; align-items:center; gap:8px; }
+.logo-mark {
+width:28px;height:28px; border:2px solid var(–accent); border-radius:4px;
+display:flex;align-items:center;justify-content:center;
+animation:pr 3s infinite;
+}
+@keyframes pr{0%,100%{box-shadow:0 0 0 0 rgba(0,229,255,.5)}50%{box-shadow:0 0 0 5px rgba(0,229,255,0)}}
+.logo-mark::after{content:’’;width:10px;height:10px;border-radius:50%;background:var(–accent);box-shadow:0 0 8px var(–accent);}
+.logo-name{font-family:var(–cond);font-size:17px;font-weight:900;letter-spacing:3px;color:#fff;}
+.logo-name em{color:var(–accent);font-style:normal;}
+.logo-sub{font-size:8px;color:var(–dim);letter-spacing:2px;margin-left:2px;}
+
+.hdr-status{display:flex;align-items:center;gap:6px;font-size:10px;letter-spacing:1px;}
+.dot{width:7px;height:7px;border-radius:50%;background:var(–dim);}
+.dot.live{background:var(–accent2);box-shadow:0 0 6px var(–accent2);animation:blink 1s infinite;}
+.dot.conn{background:var(–accent3);box-shadow:0 0 6px var(–accent3);animation:blink 1.5s infinite;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* VIDEO */
+.vid-wrap {
+flex:1; position:relative; background:#000;
+display:flex;align-items:center;justify-content:center;
+overflow:hidden;
+}
+
+video#localVid {
+position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
+transform:scaleX(-1); /* mirror for selfie */
+}
+
+.vid-overlay {
+position:absolute;inset:0;z-index:2;pointer-events:none;
+}
+.corner{position:absolute;width:18px;height:18px;border-color:var(–accent2);border-style:solid;opacity:.6;}
+.corner.tl{top:10px;left:10px;border-width:2px 0 0 2px;}
+.corner.tr{top:10px;right:10px;border-width:2px 2px 0 0;}
+.corner.bl{bottom:10px;left:10px;border-width:0 0 2px 2px;}
+.corner.br{bottom:10px;right:10px;border-width:0 2px 2px 0;}
+
+.stream-badge {
+position:absolute;top:12px;left:50%;transform:translateX(-50%);
+display:none;align-items:center;gap:6px;
+background:rgba(255,61,113,.15);border:1px solid var(–accent2);
+padding:4px 12px;border-radius:2px;
+font-size:10px;letter-spacing:3px;color:var(–accent2);
+}
+.stream-badge.show{display:flex;}
+.sbdot{width:6px;height:6px;border-radius:50%;background:var(–accent2);animation:blink 1s infinite;}
+
+.stats-hud {
+position:absolute;bottom:12px;right:12px;
+display:flex;flex-direction:column;gap:3px;align-items:flex-end;
+}
+.hud-line{font-size:9px;letter-spacing:1px;color:rgba(0,229,255,.7);background:rgba(0,0,0,.5);padding:2px 6px;border-radius:2px;}
+
+.no-cam {
+position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;
+background:#000;z-index:1;
+}
+.no-cam-ring{width:60px;height:60px;border:1.5px solid var(–border);border-radius:50%;display:flex;align-items:center;justify-content:center;opacity:.4;}
+.no-cam p{font-size:11px;color:var(–dim);}
+
+/* BOTTOM PANEL */
+.bottom {
+background:var(–panel);
+border-top:1px solid var(–border);
+padding:14px 16px;
+flex-shrink:0;
+}
+
+/* My Camera ID */
+.id-section { margin-bottom:14px; }
+.id-label{font-size:8px;letter-spacing:2px;color:var(–dim);margin-bottom:5px;}
+.id-box{
+display:flex;align-items:center;justify-content:space-between;
+background:#0a1018;border:1px solid var(–border);
+border-radius:3px;padding:10px 12px;gap:8px;
+}
+.id-val{font-size:12px;color:var(–accent);word-break:break-all;flex:1;cursor:pointer;}
+.id-val:hover{color:#fff;}
+.copy-btn{
+background:none;border:1px solid var(–border);color:var(–dim);
+font-family:var(–mono);font-size:9px;padding:4px 8px;border-radius:2px;cursor:pointer;
+letter-spacing:1px;white-space:nowrap;
+}
+.copy-btn:hover{border-color:var(–accent);color:var(–accent);}
+
+/* Connect to viewer */
+.connect-section { margin-bottom:14px; }
+.connect-row{display:flex;gap:6px;}
+.connect-input{
+flex:1;background:#0a1018;border:1px solid var(–border);
+color:var(–text);font-family:var(–mono);font-size:12px;
+padding:9px 11px;border-radius:3px;outline:none;
+}
+.connect-input:focus{border-color:var(–accent);}
+.connect-input::placeholder{color:var(–dim);}
+
+.cbtn{
+padding:9px 14px;border:1px solid var(–border);
+background:transparent;color:var(–text);
+font-family:var(–mono);font-size:10px;letter-spacing:1px;
+cursor:pointer;border-radius:3px;transition:all .18s;white-space:nowrap;
+}
+.cbtn.cta{background:var(–accent);color:#000;border-color:var(–accent);font-weight:700;}
+.cbtn.cta:hover{background:#00ccee;}
+.cbtn:hover{border-color:var(–accent);color:var(–accent);}
+.cbtn.danger{border-color:var(–accent2);color:var(–accent2);}
+
+/* Actions */
+.actions{display:flex;gap:6px;}
+
+/* Cam select */
+.cam-row{display:flex;gap:6px;margin-bottom:12px;align-items:center;}
+.cam-row select{
+flex:1;background:#0a1018;border:1px solid var(–border);
+color:var(–text);font-family:var(–mono);font-size:11px;
+padding:8px;border-radius:3px;outline:none;
+}
+
+/* Connected viewers list */
+.viewers-row{margin-top:10px;}
+.viewers-label{font-size:8px;letter-spacing:2px;color:var(–dim);margin-bottom:5px;}
+.viewer-chip{
+display:inline-flex;align-items:center;gap:5px;
+background:#0a1018;border:1px solid var(–accent3);
+border-radius:2px;padding:3px 8px;margin:2px;
+font-size:9px;color:var(–accent3);
+}
+.viewer-chip .vdot{width:5px;height:5px;border-radius:50%;background:var(–accent3);animation:blink 1.5s infinite;}
+
+/* Status log */
+.log-area{
+max-height:72px;overflow-y:auto;margin-top:10px;
+display:flex;flex-direction:column;gap:3px;
+}
+.log-area::-webkit-scrollbar{width:2px;}
+.log-area::-webkit-scrollbar-thumb{background:var(–border);}
+.log-entry{font-size:9px;color:var(–dim);padding:2px 0;}
+.log-entry em{color:var(–text);font-style:normal;}
+
+/* Toast */
+.toast{
+position:fixed;bottom:20px;left:50%;transform:translateX(-50%);
+background:var(–panel);border:1px solid var(–accent);
+border-radius:3px;padding:8px 16px;font-size:11px;color:var(–accent);
+z-index:500;display:none;white-space:nowrap;
+}
+.toast.show{display:block;}
+
+/* Spinner */
+.spin{display:inline-block;width:8px;height:8px;border:1.5px solid var(–border);border-top-color:var(–warn);border-radius:50%;animation:rot .7s linear infinite;margin-right:4px;}
+@keyframes rot{to{transform:rotate(360deg)}}
+</style>
+
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-mark"></div>
+    <div>
+      <div class="logo-name">SENTI<em>NEL</em></div>
+      <div class="logo-sub">CAMERA</div>
+    </div>
+  </div>
+  <div class="hdr-status">
+    <div class="dot" id="streamDot"></div>
+    <span id="streamStatus">OFFLINE</span>
+  </div>
+</header>
+
+<!-- VIDEO -->
+
+<div class="vid-wrap">
+  <div class="no-cam" id="noCam">
+    <div class="no-cam-ring">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M15 10l4.553-2.069A1 1 0 0121 8.82v6.36a1 1 0 01-1.447.889L15 14M3 8a2 2 0 012-2h10a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z"/></svg>
+    </div>
+    <p>Tap START CAMERA below</p>
+  </div>
+  <video id="localVid" autoplay muted playsinline></video>
+  <div class="vid-overlay">
+    <div class="corner tl"></div><div class="corner tr"></div>
+    <div class="corner bl"></div><div class="corner br"></div>
+    <div class="stream-badge" id="streamBadge"><div class="sbdot"></div>STREAMING</div>
+  </div>
+  <div class="stats-hud">
+    <div class="hud-line" id="hudTime">--:--:--</div>
+    <div class="hud-line" id="hudViewers">0 VIEWERS</div>
+  </div>
+</div>
+
+<!-- BOTTOM PANEL -->
+
+<div class="bottom">
+
+  <!-- Cam ID -->
+
+  <div class="id-section">
+    <div class="id-label">MY CAMERA ID — share with viewer</div>
+    <div class="id-box">
+      <div class="id-val" id="myCamId"><span class="spin"></span> Connecting…</div>
+      <button class="copy-btn" onclick="copyMyCamId()">COPY</button>
+    </div>
+  </div>
+
+  <!-- Camera select + start -->
+
+  <div class="cam-row">
+    <select id="camSelect" onchange="switchCamera(this.value)">
+      <option value="">Select camera…</option>
+    </select>
+    <button class="cbtn cta" id="startBtn" onclick="startCam()">START</button>
+    <button class="cbtn danger" id="stopBtn" onclick="stopCam()" style="display:none">STOP</button>
+  </div>
+
+  <!-- Connect to viewer -->
+
+  <div class="connect-section">
+    <div class="id-label">CONNECT TO VIEWER ID</div>
+    <div class="connect-row">
+      <input class="connect-input" id="viewerIdInput" placeholder="Paste Viewer ID here…" autocomplete="off">
+      <button class="cbtn cta" onclick="connectToViewer()">STREAM →</button>
+    </div>
+  </div>
+
+  <!-- Viewers connected -->
+
+  <div class="viewers-row" id="viewersRow" style="display:none">
+    <div class="viewers-label">CONNECTED VIEWERS</div>
+    <div id="viewerChips"></div>
+  </div>
+
+  <!-- Log -->
+
+  <div class="log-area" id="logArea"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const S = {
+  peer: null, myId: null,
+  stream: null,
+  calls: [], // active calls to viewers
+  viewers: [],
+};
+
+// ─── CLOCK ───
+setInterval(()=>{ document.getElementById('hudTime').textContent = new Date().toLocaleTimeString('en-GB'); }, 1000);
+
+// ─── PEER INIT ───
+function initPeer() {
+  S.peer = new Peer({ debug: 0 });
+  S.peer.on('open', id => {
+    S.myId = id;
+    document.getElementById('myCamId').textContent = id;
+    log(`Ready`, `Camera ID: ${id.slice(0,10)}…`);
+  });
+
+  // Viewer called us — they want our stream
+  S.peer.on('call', call => {
+    if (!S.stream) {
+      log('Viewer tried to connect — start camera first','');
+      call.close(); return;
+    }
+    call.answer(S.stream);
+    addViewer(call.peer);
+    call.on('close', ()=>removeViewer(call.peer));
+    call.on('error', ()=>removeViewer(call.peer));
+    S.calls.push(call);
+    log(`Viewer connected`, call.peer.slice(0,10)+'…');
+    updateStreamStatus();
+  });
+
+  S.peer.on('error', e => log('Peer error', e.message));
+}
+
+// ─── ENUMERATE CAMERAS ───
+async function enumCams() {
+  try {
+    const devs = await navigator.mediaDevices.enumerateDevices();
+    const cams = devs.filter(d=>d.kind==='videoinput');
+    const sel = document.getElementById('camSelect');
+    sel.innerHTML='<option value="">Select camera…</option>';
+    cams.forEach((c,i)=>{
+      const opt=document.createElement('option');
+      opt.value=c.deviceId;
+      opt.textContent=c.label||`Camera ${i+1}`;
+      sel.appendChild(opt);
+    });
+    if (cams.length===1) sel.value=cams[0].deviceId;
+  } catch(e){}
+}
+
+// ─── START CAMERA ───
+async function startCam() {
+  const deviceId = document.getElementById('camSelect').value;
+  const constraints = {
+    video: deviceId ? { deviceId:{exact:deviceId}, width:1280,height:720 } : { facingMode:'environment', width:1280,height:720 },
+    audio: true  // always request audio so viewer can choose what to record
+  };
+  try {
+    if (S.stream) S.stream.getTracks().forEach(t=>t.stop());
+    S.stream = await navigator.mediaDevices.getUserMedia(constraints);
+    document.getElementById('localVid').srcObject = S.stream;
+    document.getElementById('noCam').style.display='none';
+    document.getElementById('startBtn').style.display='none';
+    document.getElementById('stopBtn').style.display='inline-flex';
+    await enumCams();
+    log('Camera + mic started','Audio & video streaming');
+
+    S.calls.forEach(c=>{ try{c.answer(S.stream);}catch(e){} });
+    updateStreamStatus();
+  } catch(e) {
+    // fallback to video-only if mic denied
+    try {
+      const constraints2 = {
+        video: deviceId ? { deviceId:{exact:deviceId}, width:1280,height:720 } : { facingMode:'environment', width:1280,height:720 },
+        audio: false
+      };
+      if (S.stream) S.stream.getTracks().forEach(t=>t.stop());
+      S.stream = await navigator.mediaDevices.getUserMedia(constraints2);
+      document.getElementById('localVid').srcObject = S.stream;
+      document.getElementById('noCam').style.display='none';
+      document.getElementById('startBtn').style.display='none';
+      document.getElementById('stopBtn').style.display='inline-flex';
+      await enumCams();
+      log('Camera started (no mic)','Video only — mic permission denied');
+      S.calls.forEach(c=>{ try{c.answer(S.stream);}catch(e){} });
+      updateStreamStatus();
+    } catch(e2) {
+      toast('Camera access denied — please allow permission');
+      log('Camera error', e2.message);
+    }
+  }
+}
+
+function stopCam() {
+  if (S.stream) S.stream.getTracks().forEach(t=>t.stop());
+  S.stream = null;
+  document.getElementById('localVid').srcObject=null;
+  document.getElementById('noCam').style.display='flex';
+  document.getElementById('startBtn').style.display='inline-flex';
+  document.getElementById('stopBtn').style.display='none';
+  updateStreamStatus();
+  log('Camera stopped','');
+}
+
+async function switchCamera(deviceId) {
+  if (!S.stream || !deviceId) return;
+  await startCam();
+}
+
+// ─── CONNECT TO VIEWER ───
+function connectToViewer() {
+  if (!S.stream) { toast('Start your camera first!'); return; }
+  const vid = document.getElementById('viewerIdInput').value.trim();
+  if (!vid) { toast('Enter Viewer ID'); return; }
+  document.getElementById('viewerIdInput').value='';
+
+  const call = S.peer.call(vid, S.stream);
+  if (!call) { toast('Could not reach that Viewer ID'); return; }
+  S.calls.push(call);
+  addViewer(vid);
+  call.on('close',()=>removeViewer(vid));
+  call.on('error',()=>{ toast('Connection failed'); removeViewer(vid); });
+  log('Streaming to viewer', vid.slice(0,10)+'…');
+  updateStreamStatus();
+}
+
+// ─── VIEWERS ───
+function addViewer(id) {
+  if (!S.viewers.includes(id)) S.viewers.push(id);
+  renderViewers();
+  document.getElementById('hudViewers').textContent=`${S.viewers.length} VIEWER${S.viewers.length!==1?'S':''}`;
+}
+function removeViewer(id) {
+  S.viewers=S.viewers.filter(v=>v!==id);
+  renderViewers();
+  document.getElementById('hudViewers').textContent=`${S.viewers.length} VIEWER${S.viewers.length!==1?'S':''}`;
+  updateStreamStatus();
+}
+function renderViewers() {
+  const row=document.getElementById('viewersRow');
+  const chips=document.getElementById('viewerChips');
+  row.style.display=S.viewers.length?'block':'none';
+  chips.innerHTML=S.viewers.map(v=>`<div class="viewer-chip"><div class="vdot"></div>${v.slice(0,10)}…</div>`).join('');
+}
+
+function updateStreamStatus() {
+  const active = S.stream && S.viewers.length>0;
+  const camOn = !!S.stream;
+  const dot=document.getElementById('streamDot');
+  const lbl=document.getElementById('streamStatus');
+  const badge=document.getElementById('streamBadge');
+  if (active) {
+    dot.className='dot live'; lbl.textContent='STREAMING';
+    badge.classList.add('show');
+  } else if (camOn) {
+    dot.className='dot conn'; lbl.textContent='CAMERA ON';
+    badge.classList.remove('show');
+  } else {
+    dot.className='dot'; lbl.textContent='OFFLINE';
+    badge.classList.remove('show');
+  }
+}
+
+// ─── HELPERS ───
+function copyMyCamId() {
+  if (!S.myId) return;
+  navigator.clipboard.writeText(S.myId).then(()=>toast('Camera ID copied!'));
+}
+
+function log(title, sub) {
+  const area=document.getElementById('logArea');
+  const d=document.createElement('div');
+  d.className='log-entry';
+  d.innerHTML=`<em>${title}</em>${sub?' — '+sub:''}`;
+  area.insertBefore(d,area.firstChild);
+  while(area.children.length>15)area.removeChild(area.lastChild);
+}
+
+function toast(msg) {
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),3000);
+}
+
+// ─── INIT ───
+initPeer();
+enumCams();
+</script>
+
+</body>
+</html>
