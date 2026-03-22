@@ -472,72 +472,61 @@ function genPin() {
 }
 
 let peerRetries = 0;
+let currentPin = null;
 
 function initPeer() {
-  const pin = genPin();
-  setStatus('', `Connecting… (${pin})`);
+  currentPin = genPin();
 
-  // Try multiple PeerJS servers for reliability on TV browsers
-  const configs = [
-    { host: '0.peerjs.com', port: 443, secure: true, path: '/' },
-    { host: 'peerjs-server.herokuapp.com', port: 443, secure: true, path: '/' },
-  ];
-  const cfg = configs[peerRetries % configs.length] || configs[0];
+  // ★ Show PIN IMMEDIATELY — don't wait for server
+  // User can read it and type it on phone while connection completes
+  showPin(currentPin);
+  setStatus('', '⏳ Connecting to relay server…');
 
   try {
-    TV.peer = new Peer(pin, {
-      host: cfg.host, port: cfg.port,
-      secure: cfg.secure, path: cfg.path,
-      debug: 1,
-      config: {
-        iceServers: [
-          { urls: 'stun:stun.l.google.com:19302' },
-          { urls: 'stun:stun1.l.google.com:19302' },
-        ]
-      }
-    });
+    // Use bare default constructor — most compatible with TV browsers
+    TV.peer = new Peer(currentPin);
   } catch(e) {
-    // Fallback to default PeerJS cloud
-    TV.peer = new Peer(pin, { debug: 1 });
+    setStatus('err', 'PeerJS load error — check internet connection');
+    return;
   }
 
-  // Timeout — if no 'open' within 8s, show PIN anyway and retry in background
+  // Timeout — if no 'open' within 10s, warn but keep showing PIN
   const openTimeout = setTimeout(() => {
     if (!TV.myId) {
       peerRetries++;
-      if (peerRetries <= 3) {
-        // Show a "trying…" message and retry
-        setStatus('err', `Server timeout — retrying (${peerRetries}/3)…`);
+      if (peerRetries <= 2) {
+        setStatus('err', `Server slow — retrying with new PIN… (${peerRetries}/2)`);
         try { TV.peer.destroy(); } catch(e) {}
-        setTimeout(initPeer, 1000);
+        setTimeout(initPeer, 1500);
       } else {
-        // Give up on PeerJS cloud — show manual instructions
-        showPinFallback();
+        // Still show PIN and try to stay connected — peer may still work
+        setStatus('err', '⚠ Relay slow — PIN shown above may still work. Try connecting from phone.');
       }
     }
-  }, 8000);
+  }, 10000);
 
   TV.peer.on('open', id => {
     clearTimeout(openTimeout);
     TV.myId = id;
     TV.shortPin = id;
+    // Refresh PIN display with confirmed ID
     showPin(id);
-    setStatus('ok', '✓ Ready — type this PIN on your phone');
+    setStatus('ok', '✅ Ready — type the PIN above on your phone');
+    peerRetries = 0;
   });
 
   TV.peer.on('error', e => {
     clearTimeout(openTimeout);
     if (e.type === 'unavailable-id') {
       try { TV.peer.destroy(); } catch(x) {}
-      setTimeout(initPeer, 500);
-    } else if (e.type === 'network' || e.type === 'server-error' || e.type === 'socket-error') {
-      peerRetries++;
-      setStatus('err', `Network error (${e.type}) — retrying…`);
-      try { TV.peer.destroy(); } catch(x) {}
-      if (peerRetries <= 3) setTimeout(initPeer, 2000);
-      else showPinFallback();
+      setTimeout(initPeer, 300);
     } else {
-      setStatus('err', `${e.type}: ${e.message || ''}`);
+      peerRetries++;
+      setStatus('err', `Error (${e.type}) — ${peerRetries <= 2 ? 'retrying…' : 'check connection'}`);
+      if (peerRetries <= 2) {
+        try { TV.peer.destroy(); } catch(x) {}
+        setTimeout(initPeer, 2000);
+      }
     }
   });
 
@@ -569,30 +558,13 @@ function initPeer() {
   });
 }
 
-function showPinFallback() {
-  // PeerJS cloud failed — show error with instructions to use phone-first method
-  document.getElementById('tvPinDisplay').innerHTML = `
-    <span style="font-family:'Share Tech Mono',monospace;font-size:16px;color:#ff6060;
-      display:block;text-align:center;padding:10px;line-height:1.8">
-      ⚠ Could not reach relay server<br>
-      <span style="color:#fff;font-size:14px">Check internet connection &amp; reload page</span><br>
-      <span style="color:#4a7a9a;font-size:12px">Google TV: try refreshing with the menu button</span>
-    </span>`;
-  setStatus('err', 'Connection failed — reload the page to try again');
-}
-
+// ── SHOW PIN ──
 function showPin(pin) {
-  // Format: SNT- then 4 large digit boxes
   const digits = pin.replace('SNT-','');
-  const digitBoxes = digits.split('').map(d =>
-    `<span class="pin-d">${d}</span>`
-  ).join('');
-  document.getElementById('tvPinDisplay').innerHTML =
-    `<span class="pin-pre">SNT-</span>${digitBoxes}`;
+  const boxes = digits.split('').map(d => `<span class="pin-d">${d}</span>`).join('');
+  document.getElementById('tvPinDisplay').innerHTML = `<span class="pin-pre">SNT-</span>${boxes}`;
   document.getElementById('ftrId').textContent = pin;
 }
-
-// ── ON-SCREEN KEYBOARD ──
 let kbdVal = '';
 
 function kt(ch) {
