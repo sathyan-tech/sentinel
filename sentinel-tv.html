@@ -223,44 +223,8 @@ function init() {
   startPolling();
 }
 
-function renderPin(pin) {
-  const digits = pin.replace('SNT-', '');
-  document.getElementById('pinRow').innerHTML =
-    `<span class="pin-pre">SNT-</span>` +
-    digits.split('').map(d => `<span class="pin-d">${d}</span>`).join('');
-}
-
-// ── POLLING: watch for incoming offers from cam ──
-let pollLastId = '';
-
-function startPolling() {
-  setInterval(async () => {
-    try {
-      const url = `${NTFY}/sentinel-tv-${S.pin}/json?poll=1&since=30s`;
-      const r = await fetch(url, { headers: { Accept: 'application/x-ndjson' } });
-      if (!r.ok) return;
-      const txt = await r.text();
-      if (!txt.trim()) return;
-      txt.trim().split('\n').forEach(line => {
-        try {
-          const ev = JSON.parse(line);
-          if (ev.id === pollLastId) return;
-          pollLastId = ev.id;
-          const data = JSON.parse(ev.message || 'null');
-          if (!data) return;
-          if (data.type === 'offer' && !S.conns[data.camId]) {
-            receiveOffer(data.camId, data.sdp);
-          } else if (data.type === 'ice' && S.conns[data.camId]) {
-            S.conns[data.camId].addIce(data.candidate);
-          }
-        } catch(e) {}
-      });
-    } catch(e) {}
-  }, 2500);
-}
-
-// ── RECEIVE OFFER from cam, create answer ──
-async function receiveOffer(camId, offerSdp) {
+// ── RECEIVE OFFER from cam (cam typed our TV PIN) ──
+async function receiveOffer(camPin, offerSdp) {
   setSt('', `📡 Camera connecting…`);
 
   const pc = new RTCPeerConnection({
@@ -270,56 +234,42 @@ async function receiveOffer(camId, offerSdp) {
       {urls:'stun:stun2.l.google.com:19302'},
     ]
   });
+  S.conns[camPin] = pc;
 
-  const icePending = [];
-  let settled = false;
-
-  S.conns[camId] = {
-    pc,
-    addIce: async (c) => {
-      if (settled) { try { await pc.addIceCandidate(new RTCIceCandidate(c)); } catch(e){} }
-      else icePending.push(c);
-    }
-  };
-
-  // Collect our ICE and batch-send to cam
-  const myIce = [];
-  let iceFlush = null;
+  const iceQueue = [];
+  let iceTimer = null;
   pc.onicecandidate = e => {
     if (!e.candidate) return;
-    myIce.push(e.candidate.toJSON());
-    clearTimeout(iceFlush);
-    iceFlush = setTimeout(async () => {
-      await ntfyPost(`sentinel-cam-${camId}`, { type:'ice-batch', candidates: myIce.splice(0) });
+    iceQueue.push(e.candidate.toJSON());
+    clearTimeout(iceTimer);
+    iceTimer = setTimeout(async () => {
+      // Send our ICE to cam's inbox
+      await ntfyPost(`snt-to-${camPin}`, { type:'ice-batch', tvPin: S.pin, candidates: iceQueue.splice(0) });
     }, 400);
   };
 
   pc.ontrack = e => {
     if (!e.streams || !e.streams[0]) return;
-    const stream = e.streams[0];
-    if (stream.getVideoTracks().length === 0) return;
+    if (e.streams[0].getVideoTracks().length === 0) return;
     const label = `CAM-${S.cams.length + 1}`;
-    addCam(camId, stream, label);
+    addCam(camPin, e.streams[0], label);
     document.getElementById('setup').classList.add('gone');
     setSt('ok', `✅ ${label} connected`);
     ftrLog('s', `📡 ${label} connected`);
   };
 
   pc.onconnectionstatechange = () => {
-    if (pc.connectionState==='disconnected'||pc.connectionState==='failed') removeCam(camId);
+    if (pc.connectionState==='disconnected'||pc.connectionState==='failed') {
+      removeCam(camPin); delete S.conns[camPin];
+    }
   };
 
   await pc.setRemoteDescription({ type:'offer', sdp: offerSdp });
-
-  // Drain any ICE that arrived early
-  settled = true;
-  for (const c of icePending) { try { await pc.addIceCandidate(new RTCIceCandidate(c)); } catch(e){} }
-
   const answer = await pc.createAnswer();
   await pc.setLocalDescription(answer);
 
-  // Send answer to cam
-  await ntfyPost(`sentinel-cam-${camId}`, { type:'answer', sdp: pc.localDescription.sdp });
+  // Send answer to cam's inbox: snt-to-{camPin}
+  await ntfyPost(`snt-to-${camPin}`, { type:'answer', tvPin: S.pin, sdp: pc.localDescription.sdp });
 }
 
 // ── CONNECT CAM MANUALLY: TV types cam PIN and calls it ──
@@ -337,10 +287,7 @@ async function connectCam() {
   });
 
   const camId = camPin;
-  S.conns[camId] = {
-    pc,
-    addIce: async (c) => { try { await pc.addIceCandidate(new RTCIceCandidate(c)); } catch(e){} }
-  };
+  S.conns[camId] = pc;
 
   const myIce = [];
   let iceFlush = null;
@@ -349,7 +296,7 @@ async function connectCam() {
     myIce.push(e.candidate.toJSON());
     clearTimeout(iceFlush);
     iceFlush = setTimeout(async () => {
-      await ntfyPost(`sentinel-cam-${camPin}`, { type:'ice-batch', from:'tv', candidates: myIce.splice(0) });
+      await ntfyPost(`snt-to-${camPin}`, { type:'ice-batch', tvPin: S.pin, candidates: myIce.splice(0) });
     }, 400);
   };
 
@@ -358,7 +305,7 @@ async function connectCam() {
     const stream = e.streams[0];
     if (stream.getVideoTracks().length === 0) return;
     const label = `CAM-${S.cams.length + 1}`;
-    addCam(camId, stream, label);
+    addCam(camPin, e.streams[0], label);
     document.getElementById('setup').classList.add('gone');
     setSt('ok', `✅ ${label} connected`);
     ftrLog('s', `📡 ${label} connected`);
@@ -370,39 +317,38 @@ async function connectCam() {
   const offer = await pc.createOffer();
   await pc.setLocalDescription(offer);
 
-  await ntfyPost(`sentinel-cam-${camPin}`, {
+  // Post offer to cam's inbox: snt-to-{camPin}
+  await ntfyPost(`snt-to-${camPin}`, {
     type:'offer', tvPin: S.pin, sdp: pc.localDescription.sdp
   });
 
   setSt('', 'Offer sent — waiting for camera…');
 
-  // Poll for answer on our channel
+  // Poll TV's own inbox for cam's answer
   let tries = 0;
+  const seenAns = new Set();
   const answerIv = setInterval(async () => {
-    if (++tries > 30) { clearInterval(answerIv); setSt('err','No response — is cam page open?'); return; }
-    try {
-      const r = await fetch(`${NTFY}/sentinel-tv-${S.pin}/json?poll=1&since=60s`, { headers:{Accept:'application/x-ndjson'} });
-      if (!r.ok) return;
-      const txt = await r.text();
-      if (!txt.trim()) return;
-      for (const line of txt.trim().split('\n')) {
-        try {
-          const ev = JSON.parse(line);
-          const data = JSON.parse(ev.message || 'null');
-          if (!data) continue;
-          if (data.type === 'answer') {
-            clearInterval(answerIv);
-            await pc.setRemoteDescription({ type:'answer', sdp: data.sdp });
-          } else if (data.type === 'ice-batch') {
-            for (const c of (data.candidates||[])) { try { await pc.addIceCandidate(new RTCIceCandidate(c)); } catch(e){} }
-          }
-        } catch(e) {}
-      }
-    } catch(e) {}
+    if (++tries > 40) { clearInterval(answerIv); setSt('err','No response — is cam page open and started?'); return; }
+    const msgs = await ntfyPoll(`snt-to-${S.pin}`, '60s');
+    for (const ev of msgs) {
+      if (seenAns.has(ev.id)) continue;
+      seenAns.add(ev.id);
+      try {
+        const data = JSON.parse(ev.message || 'null');
+        if (!data) continue;
+        if (data.type === 'answer' && data.camPin === camPin) {
+          clearInterval(answerIv);
+          await pc.setRemoteDescription({ type:'answer', sdp: data.sdp });
+          setSt('ok', 'Answer received — connecting…');
+        } else if (data.type === 'ice-batch') {
+          for (const c of (data.candidates||[])) { try { await pc.addIceCandidate(new RTCIceCandidate(c)); } catch(e){} }
+        }
+      } catch(e) {}
+    }
   }, 2000);
 }
 
-// ── ntfy helper ──
+// ── ntfy helpers ──
 async function ntfyPost(channel, data) {
   try {
     await fetch(`${NTFY}/${channel}`, {
@@ -411,6 +357,57 @@ async function ntfyPost(channel, data) {
       body: JSON.stringify(data)
     });
   } catch(e) {}
+}
+
+async function ntfyPoll(channel, since) {
+  try {
+    const r = await fetch(`${NTFY}/${channel}/json?poll=1&since=${since}`, { headers:{Accept:'application/x-ndjson'} });
+    if (!r.ok) return [];
+    const txt = await r.text();
+    if (!txt.trim()) return [];
+    return txt.trim().split('\n').map(l => { try { return JSON.parse(l); } catch(e) { return null; }}).filter(Boolean);
+  } catch(e) { return []; }
+}
+
+// ── Generate PIN & show immediately ──
+function init() {
+  S.pin = 'SNT-' + Math.floor(1000 + Math.random() * 9000);
+  renderPin(S.pin);
+  document.getElementById('ftrPin').textContent = S.pin;
+  setSt('ok', '✅ Ready — type PIN ' + S.pin + ' on your phone');
+  startPolling();
+}
+
+function renderPin(pin) {
+  const digits = pin.replace('SNT-', '');
+  document.getElementById('pinRow').innerHTML =
+    `<span class="pin-pre">SNT-</span>` +
+    digits.split('').map(d => `<span class="pin-d">${d}</span>`).join('');
+}
+
+// ── POLL TV's own inbox: snt-to-{tvPin} ──
+let tvSeenIds = new Set();
+
+function startPolling() {
+  setInterval(async () => {
+    const msgs = await ntfyPoll(`snt-to-${S.pin}`, '60s');
+    for (const ev of msgs) {
+      if (tvSeenIds.has(ev.id)) continue;
+      tvSeenIds.add(ev.id);
+      try {
+        const data = JSON.parse(ev.message || 'null');
+        if (!data) continue;
+        if (data.type === 'offer' && data.camPin && !S.conns[data.camPin]) {
+          receiveOffer(data.camPin, data.sdp);
+        } else if (data.type === 'ice-batch' && data.camPin && S.conns[data.camPin]) {
+          const pc = S.conns[data.camPin];
+          for (const c of (data.candidates||[])) {
+            try { await pc.addIceCandidate(new RTCIceCandidate(c)); } catch(e){}
+          }
+        }
+      } catch(e) {}
+    }
+  }, 2500);
 }
 
 // ── ADD CAM CELL ──
