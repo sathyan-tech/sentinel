@@ -29,6 +29,20 @@ width:100% !important; height:100% !important;
 object-fit:cover; display:block;
 transform:translateZ(0); -webkit-transform:translateZ(0);
 }
+
+/* Tap to play overlay for Google TV */
+.tap-play {
+position:absolute; inset:0; z-index:10;
+display:flex; align-items:center; justify-content:center;
+background:rgba(0,0,0,.5); cursor:pointer;
+}
+.tap-play-btn {
+width:80px; height:80px; border-radius:50%;
+background:rgba(0,229,255,.2); border:3px solid #00e5ff;
+display:flex; align-items:center; justify-content:center;
+font-size:32px;
+}
+.tap-play.hidden { display:none; }
 .cam-label {
 position:absolute; bottom:10px; left:12px;
 font-size:11px; letter-spacing:2px; color:#00e5ff;
@@ -410,7 +424,10 @@ function addCamCell(id, stream, label) {
   const div = document.createElement('div');
   div.className = 'cam'; div.id = `cam-${id}`;
   div.innerHTML = `
-    <video id="v-${id}" autoplay muted playsinline webkit-playsinline></video>
+    <video id="v-${id}" autoplay muted playsinline webkit-playsinline x-webkit-airplay="allow"></video>
+    <div class="tap-play" id="tp-${id}" onclick="tapPlay('${id}')">
+      <div class="tap-play-btn">▶</div>
+    </div>
     <div class="cam-live"><div class="d"></div>LIVE</div>
     <div class="cam-label">${label}</div>
     <div class="cc tl"></div><div class="cc tr"></div>
@@ -419,22 +436,61 @@ function addCamCell(id, stream, label) {
   feeds.appendChild(div);
 
   const vid = document.getElementById(`v-${id}`);
+
+  // Google TV requires: set srcObject BEFORE attaching event listeners,
+  // then force muted, then call play() repeatedly until it succeeds
+  vid.muted = true;
+  vid.volume = 0;
+  vid.srcObject = stream;
+
+  let playAttempts = 0;
   function tryPlay() {
     vid.muted = true;
+    vid.volume = 0;
     const p = vid.play();
-    if (p && p.catch) p.catch(() => setTimeout(tryPlay, 800));
+    if (p !== undefined) {
+      p.then(() => {
+        // Success — hide tap overlay
+        const tp = document.getElementById(`tp-${id}`);
+        if (tp) tp.classList.add('hidden');
+      }).catch(err => {
+        playAttempts++;
+        if (playAttempts < 20) {
+          setTimeout(tryPlay, 500);
+        }
+      });
+    }
   }
-  vid.onloadedmetadata = tryPlay;
-  vid.oncanplay = tryPlay;
-  vid.srcObject = stream;
-  vid.muted = true;
-  tryPlay();
 
-  // Watchdog every 3s
+  vid.addEventListener('loadedmetadata', tryPlay);
+  vid.addEventListener('canplay', tryPlay);
+  vid.addEventListener('loadeddata', tryPlay);
+
+  // Call immediately too
+  setTimeout(tryPlay, 100);
+  setTimeout(tryPlay, 500);
+  setTimeout(tryPlay, 1000);
+  setTimeout(tryPlay, 2000);
+  setTimeout(tryPlay, 3000);
+
+  // Watchdog: check every 2s — if paused but has data, force play
   const wd = setInterval(() => {
-    if (!document.getElementById(`v-${id}`)) { clearInterval(wd); return; }
-    if (vid.paused && vid.readyState >= 2) { vid.muted=true; vid.play().catch(()=>{}); }
-  }, 3000);
+    const el = document.getElementById(`v-${id}`);
+    if (!el) { clearInterval(wd); return; }
+    if (vid.readyState >= 2) {
+      if (vid.paused) {
+        vid.muted = true;
+        vid.volume = 0;
+        vid.play().catch(() => {});
+      }
+    }
+    // If srcObject got lost, reattach
+    if (!vid.srcObject) {
+      vid.srcObject = stream;
+      vid.muted = true;
+      vid.play().catch(() => {});
+    }
+  }, 2000);
 
   T.cams.push({ id, stream, label, vid, mfl: document.getElementById(`mf-${id}`), prevFrame:null, lastMotion:0 });
   if (!T.startTime) { T.startTime = Date.now(); startUptime(); }
@@ -550,6 +606,32 @@ document.addEventListener('keydown', e => {
     if (e.key === 'a' || e.key === 'A') document.getElementById('setup').classList.remove('hidden');
   }
 });
+
+// ── Tap to play (Google TV gesture unlock) ──
+function tapPlay(id) {
+  const vid = document.getElementById(`v-${id}`);
+  const tp = document.getElementById(`tp-${id}`);
+  if (!vid) return;
+  vid.muted = true;
+  vid.volume = 0;
+  vid.play().then(() => {
+    if (tp) tp.classList.add('hidden');
+  }).catch(() => {});
+}
+
+// ── Unlock all videos on any user interaction ──
+// Google TV requires a user gesture before playing video
+document.addEventListener('click', () => {
+  T.cams.forEach(cam => {
+    if (cam.vid && cam.vid.paused) {
+      cam.vid.muted = true;
+      cam.vid.play().then(() => {
+        const tp = document.getElementById(`tp-${cam.id}`);
+        if (tp) tp.classList.add('hidden');
+      }).catch(() => {});
+    }
+  });
+}, { once: false });
 
 // ── GO ──
 init();
