@@ -136,12 +136,6 @@ body::before{content:’’;position:fixed;inset:0;background:radial-gradient(el
 background:rgba(0,0,0,.6);border:2px solid var(–accent);
 border-radius:8px;padding:20px;text-align:center;margin-bottom:12px;
 }
-.s-tv-id{
-font-family:var(–orb);font-size:clamp(14px,1.6vw,22px);
-font-weight:700;color:var(–accent);letter-spacing:2px;
-word-break:break-all;line-height:1.6;
-text-shadow:0 0 20px rgba(0,212,255,.5);
-}
 .s-step{
 font-size:11px;color:var(–text);line-height:1.9;
 background:rgba(0,0,0,.3);border:1px solid var(–border);
@@ -203,13 +197,13 @@ color:var(–dim);min-height:28px;padding:6px;
 .s-status.err{color:var(–accent2);}
 
 /* PIN display — large spaced digits */
-.s-tv-id{display:flex;align-items:center;justify-content:center;gap:6px;flex-wrap:wrap;min-height:72px;}
-.pin-prefix{font-family:var(–orb);font-size:32px;font-weight:700;color:var(–dim);letter-spacing:2px;}
+.pin-row{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:nowrap;padding:10px 0;}
+.pin-prefix{font-family:var(–orb);font-size:28px;font-weight:700;color:var(–dim);letter-spacing:2px;white-space:nowrap;}
 .pin-digit{
-font-family:var(–orb);font-size:64px;font-weight:900;color:var(–accent);
-line-height:1;text-shadow:0 0 30px rgba(0,212,255,.6);
-background:rgba(0,212,255,.06);border:1px solid rgba(0,212,255,.2);
-border-radius:8px;padding:4px 14px;min-width:70px;text-align:center;
+font-family:var(–orb);font-size:56px;font-weight:900;color:var(–accent);
+line-height:1;text-shadow:0 0 24px rgba(0,212,255,.7);
+background:rgba(0,212,255,.08);border:2px solid rgba(0,212,255,.3);
+border-radius:8px;padding:6px 14px;min-width:64px;text-align:center;
 }
 
 .spin{display:inline-block;width:10px;height:10px;border:2px solid var(–border);border-top-color:var(–accent);border-radius:50%;animation:rot .7s linear infinite;margin-right:6px;vertical-align:middle;}
@@ -429,12 +423,23 @@ function initPeer() {
   });
 
   TV.peer.on('call', call => {
-    call.answer();
+    // TV has no camera — answer with silent audio so WebRTC handshake completes
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const dest = ctx.createMediaStreamDestination();
+      call.answer(dest.stream);
+      ctx.close();
+    } catch(e) {
+      call.answer(); // fallback: answer with nothing
+    }
+
     call.on('stream', stream => {
+      if (!stream || stream.getVideoTracks().length === 0) return; // ignore empty streams
       const label = `CAM-${TV.cams.length+1}`;
       addCamCell(call.peer, stream, label);
       setStatus('ok', `✓ ${label} connected`);
       ftrEvent('sys', `📡 ${label} connected`);
+      document.getElementById('setup').classList.add('gone');
     });
     call.on('close', ()=>removeCam(call.peer));
     call.on('error', ()=>removeCam(call.peer));
@@ -442,11 +447,12 @@ function initPeer() {
 }
 
 function showPin(pin) {
-  // Display as big spaced digits e.g.  SNT-7342
   const digits = pin.replace('SNT-','');
-  document.getElementById('tvPinDisplay').innerHTML =
-    `<span class="pin-prefix">SNT-</span>` +
-    digits.split('').map(d=>`<span class="pin-digit">${d}</span>`).join('');
+  const html = `<div class="pin-row">
+    <span class="pin-prefix">SNT-</span>
+    ${digits.split('').map(d=>`<span class="pin-digit">${d}</span>`).join('')}
+  </div>`;
+  document.getElementById('tvPinDisplay').innerHTML = html;
   document.getElementById('ftrId').textContent = pin;
 }
 
@@ -473,23 +479,41 @@ function refreshKbd() {
 }
 
 // ── CONNECT A CAM ──
+// NOTE: The TV never calls the cam. The cam always calls the TV.
+// This button is only used if you want the TV to initiate — it tells
+// the cam side to call us, by showing the cam PIN to enter on the cam page.
+// For direct TV→cam calling we must pass a real stream, which TV has none of.
+// So: connectCam here just validates input and shows a "waiting" message —
+// the user must go to the cam and enter *this TV's* PIN there.
 function connectCam() {
   const id = kbdVal.trim();
-  if (!id) { setStatus('err', 'Type a Camera ID first using the keyboard →'); return; }
-  setStatus('', `Connecting to ${id.slice(0,10)}…`);
+  if (!id) { setStatus('err', 'Type the Camera PIN using the keyboard'); return; }
+
+  setStatus('', `⏳ Waiting… go to sentinel-cam.html and enter TV PIN: ${TV.shortPin}`);
+
+  // Try calling — works if cam page also calls us simultaneously (race condition avoided by PeerJS)
+  // We send a silent audio track so PeerJS accepts the call
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const dest = ctx.createMediaStreamDestination();
+    const silentStream = dest.stream;
+    const call = TV.peer.call(id, silentStream);
+    if (!call) { setStatus('err','Could not reach that PIN — check it is correct'); return; }
+    call.on('stream', stream => {
+      if (stream && stream.getVideoTracks().length > 0) {
+        const label = `CAM-${TV.cams.length+1}`;
+        addCamCell(id, stream, label);
+        setStatus('ok', `✓ ${label} connected`);
+        ftrEvent('sys', `📡 ${label} connected`);
+        document.getElementById('setup').classList.add('gone');
+        ctx.close();
+      }
+    });
+    call.on('error', ()=>{ setStatus('err','Connection failed — make sure cam page is open and started'); });
+  } catch(e) {
+    setStatus('err', `Could not connect: ${e.message}`);
+  }
   kc();
-
-  const call = TV.peer.call(id, new MediaStream());
-  if (!call) { setStatus('err','Could not reach that Camera ID'); return; }
-
-  call.on('stream', stream => {
-    const label = `CAM-${TV.cams.length+1}`;
-    addCamCell(id, stream, label);
-    setStatus('ok', `✓ ${label} connected`);
-    ftrEvent('sys', `📡 ${label} connected`);
-    if (TV.cams.length >= 1) document.getElementById('setup').classList.add('gone');
-  });
-  call.on('error', ()=>{ setStatus('err','Connection failed — check Camera ID'); });
 }
 
 function addMoreCam() {
