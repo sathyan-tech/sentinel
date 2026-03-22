@@ -9,10 +9,46 @@
 * { margin:0; padding:0; box-sizing:border-box; }
 html, body { width:100%; height:100%; background:#000; color:#fff; font-family:'Courier New',monospace; overflow:hidden; }
 
+/* ── GESTURE UNLOCK SPLASH ── */
+/* This is shown FIRST before anything else.
+Google TV requires a real user gesture (click/keypress) before
+any video can play. This splash collects that gesture. */
+#splash {
+position:fixed; inset:0; z-index:9000;
+background:#000;
+display:flex; flex-direction:column;
+align-items:center; justify-content:center; gap:28px;
+cursor:pointer;
+}
+#splash h1 {
+font-size:42px; letter-spacing:10px; color:#fff;
+font-family:‘Courier New’,monospace; font-weight:900;
+}
+#splash h1 span { color:#00e5ff; }
+#splash p {
+font-size:16px; letter-spacing:3px; color:#336;
+}
+#splash .press-btn {
+margin-top:10px;
+padding:20px 60px;
+background:#00e5ff; color:#000;
+font-size:20px; font-weight:900;
+letter-spacing:4px;
+border:none; border-radius:8px; cursor:pointer;
+font-family:‘Courier New’,monospace;
+box-shadow:0 0 40px rgba(0,229,255,.5);
+animation:pulse 2s infinite;
+}
+@keyframes pulse {
+0%,100%{box-shadow:0 0 40px rgba(0,229,255,.5);}
+50%{box-shadow:0 0 80px rgba(0,229,255,.9);}
+}
+#splash.gone { display:none; }
+
 /* ── FEEDS ── */
 #feeds {
-position:fixed; top:0; left:0; right:0; bottom:80px;
-display:grid; background:#111;
+position:fixed; top:0; left:0; right:0; bottom:72px;
+display:grid; background:#000;
 }
 #feeds.n1 { grid-template-columns:1fr; }
 #feeds.n2 { grid-template-columns:1fr 1fr; }
@@ -20,171 +56,131 @@ display:grid; background:#111;
 #feeds.n4 { grid-template-columns:1fr 1fr; grid-template-rows:1fr 1fr; }
 #feeds.n3 .cam:first-child { grid-column:1/3; }
 
-.cam {
-position:relative; background:#000; overflow:hidden;
-}
+.cam { position:relative; background:#000; overflow:hidden; }
 .cam video {
 position:absolute; inset:0;
 width:100% !important; height:100% !important;
 object-fit:cover; display:block;
-transform:translateZ(0); -webkit-transform:translateZ(0);
+transform:translateZ(0);
 }
-
-/* Tap to play overlay for Google TV */
-.tap-play {
-position:absolute; inset:0; z-index:10;
-display:flex; align-items:center; justify-content:center;
-background:rgba(0,0,0,.4); cursor:pointer;
-border:none; width:100%; padding:0;
-}
-.tap-play:focus { outline:4px solid #00e5ff; }
-.tap-play-btn {
-width:90px; height:90px; border-radius:50%;
-background:rgba(0,229,255,.25); border:3px solid #00e5ff;
-display:flex; align-items:center; justify-content:center;
-font-size:38px; pointer-events:none;
-}
-.tap-play.hidden { display:none; }
 .cam-label {
 position:absolute; bottom:10px; left:12px;
 font-size:11px; letter-spacing:2px; color:#00e5ff;
-background:rgba(0,0,0,.75); padding:3px 9px; border-radius:2px;
-z-index:3;
+background:rgba(0,0,0,.8); padding:4px 10px; border-radius:2px; z-index:3;
 }
 .cam-live {
 position:absolute; top:10px; left:12px;
 display:flex; align-items:center; gap:5px;
 font-size:9px; letter-spacing:2px; color:#00ff88;
-background:rgba(0,0,0,.75); padding:3px 8px; border-radius:2px;
-z-index:3;
+background:rgba(0,0,0,.8); padding:3px 9px; border-radius:2px; z-index:3;
 }
-.cam-live .d { width:5px; height:5px; border-radius:50%; background:#00ff88; animation:bl 1.5s infinite; }
+.cam-live .d { width:6px; height:6px; border-radius:50%; background:#00ff88; animation:bl 1.5s infinite; }
 @keyframes bl { 0%,100%{opacity:1}50%{opacity:.2} }
-.cc { position:absolute; width:20px; height:20px; border-color:#00e5ff; border-style:solid; opacity:.5; z-index:3; }
+.cc { position:absolute; width:22px; height:22px; border-color:#00e5ff; border-style:solid; opacity:.5; z-index:3; }
 .cc.tl{top:10px;left:10px;border-width:2px 0 0 2px;}
 .cc.tr{top:10px;right:10px;border-width:2px 2px 0 0;}
 .cc.bl{bottom:10px;left:10px;border-width:0 0 2px 2px;}
 .cc.br{bottom:10px;right:10px;border-width:0 2px 2px 0;}
-.mfl { position:absolute; inset:0; z-index:4; pointer-events:none; background:rgba(255,200,0,.12); opacity:0; transition:opacity .12s; }
-.mfl.on { opacity:1; }
+.mfl{position:absolute;inset:0;z-index:4;pointer-events:none;background:rgba(255,200,0,.12);opacity:0;transition:opacity .12s;}
+.mfl.on{opacity:1;}
 
 /* ── SETUP OVERLAY ── */
 #setup {
 position:fixed; inset:0; background:#000;
-display:flex; align-items:center; justify-content:center;
-z-index:200;
+display:flex; align-items:center; justify-content:center; z-index:500;
 }
 #setup.hidden { display:none; }
 
 .card {
-width:88vw; max-width:860px;
-background:#06111f;
-border:3px solid #00e5ff;
-border-radius:12px;
-padding:30px 36px;
-box-shadow: 0 0 60px rgba(0,229,255,.2);
+width:88vw; max-width:860px; background:#06111f;
+border:3px solid #00e5ff; border-radius:12px; padding:30px 36px;
+box-shadow:0 0 60px rgba(0,229,255,.2);
 }
-
-.card h1 {
-font-size:32px; letter-spacing:8px; text-align:center;
-color:#fff; margin-bottom:3px;
-}
+.card h1 { font-size:30px; letter-spacing:8px; text-align:center; color:#fff; margin-bottom:3px; }
 .card h1 span { color:#00e5ff; }
-.card .sub { font-size:9px; letter-spacing:5px; color:#224; text-align:center; margin-bottom:22px; }
+.card .sub { font-size:9px; letter-spacing:5px; color:#446; text-align:center; margin-bottom:20px; }
 
-/* PIN BOX */
 .pin-box {
-background:#000; border:3px solid #00e5ff;
-border-radius:10px; padding:18px 20px 14px;
-text-align:center; margin-bottom:18px;
+background:#000; border:3px solid #00e5ff; border-radius:10px;
+padding:16px 20px 12px; text-align:center; margin-bottom:16px;
 box-shadow:0 0 30px rgba(0,229,255,.15);
 }
-.pin-box .lbl { font-size:10px; letter-spacing:3px; color:#336; margin-bottom:10px; }
+.pin-box .lbl { font-size:10px; letter-spacing:3px; color:#446; margin-bottom:10px; }
 .pin-digits { display:flex; align-items:center; justify-content:center; gap:8px; }
-.pin-pre { font-size:26px; font-weight:bold; color:#336; }
+.pin-pre { font-size:24px; font-weight:bold; color:#446; }
 .pin-d {
-font-size:62px; font-weight:900; color:#00e5ff;
+font-size:58px; font-weight:900; color:#00e5ff; line-height:1;
 background:rgba(0,229,255,.08); border:2px solid rgba(0,229,255,.4);
-border-radius:8px; padding:4px 12px; min-width:68px; text-align:center;
-line-height:1; text-shadow:0 0 28px rgba(0,229,255,.8);
+border-radius:8px; padding:4px 12px; min-width:66px; text-align:center;
+text-shadow:0 0 28px rgba(0,229,255,.8);
 }
-.pin-hint { font-size:11px; color:#336; margin-top:10px; }
+.pin-hint { font-size:11px; color:#446; margin-top:8px; }
 .pin-hint strong { color:#aac; }
 
-/* Steps */
-.steps { display:flex; gap:6px; margin-bottom:16px; }
+.steps { display:flex; gap:6px; margin-bottom:14px; }
 .step { flex:1; background:rgba(0,229,255,.05); border:1px solid rgba(0,229,255,.15); border-radius:7px; padding:10px 8px; text-align:center; }
 .step .n { font-size:18px; font-weight:bold; color:#00e5ff; margin-bottom:4px; }
 .step .t { font-size:10px; color:#aac; line-height:1.5; }
 .step .t strong { color:#fff; }
 
-/* Keyboard display */
 .kbd-disp {
-background:#000; border:2px solid #1a2a3a;
-border-radius:7px; padding:10px 14px;
-margin-bottom:9px; min-height:50px;
-display:flex; align-items:center; gap:5px;
-transition:border-color .15s;
+background:#000; border:2px solid #0a2030; border-radius:7px;
+padding:10px 14px; margin-bottom:9px; min-height:50px;
+display:flex; align-items:center; gap:5px; transition:border-color .15s;
 }
 .kbd-disp.on { border-color:#00e5ff; }
-.kbd-typed {
-font-size:22px; font-weight:bold; color:#00e5ff;
-letter-spacing:4px; flex:1;
-text-shadow:0 0 12px rgba(0,229,255,.5);
-}
+.kbd-typed { font-size:22px; font-weight:bold; color:#00e5ff; letter-spacing:4px; flex:1; }
 .cursor { width:3px; height:24px; background:#00e5ff; animation:cur .8s step-end infinite; }
-@keyframes cur { 0%,100%{opacity:1} 50%{opacity:0} }
+@keyframes cur { 0%,100%{opacity:1}50%{opacity:0} }
 
-/* Keys */
 .keys { display:flex; gap:5px; justify-content:center; flex-wrap:wrap; }
 .k {
-min-width:56px; height:56px;
-background:#0c1a28; border:2px solid #1a3a54;
-border-radius:6px; font-family:‘Courier New’,monospace;
-font-size:20px; color:#6a9ab8;
+min-width:56px; height:56px; background:#0c1a28; border:2px solid #1a3a54;
+border-radius:6px; font-family:‘Courier New’,monospace; font-size:20px; color:#6a9ab8;
 cursor:pointer; display:flex; align-items:center; justify-content:center;
-outline:3px solid transparent; outline-offset:2px;
-transition:all .1s;
+outline:3px solid transparent; outline-offset:2px; transition:all .1s;
 }
 .k:focus, .k:hover {
 background:rgba(0,229,255,.2); border-color:#00e5ff;
 color:#fff; outline-color:#00e5ff; transform:scale(1.06);
 }
 .k.del { min-width:74px; color:#ff5070; border-color:rgba(255,80,112,.35); font-size:14px; }
-.k.del:focus, .k.del:hover { background:rgba(255,80,112,.18); border-color:#ff5070; color:#ff5070; }
-.k.go {
-min-width:140px; background:#00e5ff; color:#000;
-border-color:#00e5ff; font-size:13px; font-weight:900; letter-spacing:2px;
-}
-.k.go:focus, .k.go:hover { background:#fff; }
+.k.del:focus,.k.del:hover { background:rgba(255,80,112,.18); border-color:#ff5070; color:#ff5070; }
+.k.go { min-width:140px; background:#00e5ff; color:#000; border-color:#00e5ff; font-size:13px; font-weight:900; letter-spacing:2px; }
+.k.go:focus,.k.go:hover { background:#fff; }
 
-.status {
-text-align:center; font-size:11px; letter-spacing:2px;
-color:#336; min-height:20px; margin-top:8px;
-}
-.status.ok { color:#00ff88; }
-.status.err { color:#ff5070; }
+.st { text-align:center; font-size:11px; letter-spacing:2px; color:#446; min-height:20px; margin-top:8px; }
+.st.ok { color:#00ff88; }
+.st.err { color:#ff5070; }
 
 /* ── FOOTER ── */
 #footer {
-position:fixed; bottom:0; left:0; right:0; height:80px;
+position:fixed; bottom:0; left:0; right:0; height:72px;
 background:rgba(0,0,0,.95); border-top:1px solid #0a1a2a;
 display:flex; align-items:center; justify-content:space-between;
 padding:0 28px; z-index:100;
 }
-.ftr-pin { display:flex; flex-direction:column; gap:1px; }
-.ftr-pin-l { font-size:7px; letter-spacing:2px; color:#224; }
-.ftr-pin-v { font-size:12px; color:#00e5ff; letter-spacing:2px; }
-.ftr-ev { display:flex; gap:5px; overflow:hidden; }
+.fpin { display:flex; flex-direction:column; gap:1px; }
+.fpin-l { font-size:7px; letter-spacing:2px; color:#224; }
+.fpin-v { font-size:12px; color:#00e5ff; letter-spacing:2px; }
+.fev-bar { display:flex; gap:5px; overflow:hidden; }
 .fev { padding:3px 10px; background:#0a1018; border:1px solid #0a1a2a; border-radius:2px; font-size:8px; color:#336; white-space:nowrap; }
 .fev.m { border-color:rgba(255,200,0,.3); color:#ffcc00; }
 .fev.s { border-color:rgba(0,229,255,.2); color:#00e5ff; }
 .lbtns { display:flex; gap:4px; align-items:center; }
 .lb { width:36px; height:26px; background:#0a1018; border:1px solid #0a1a2a; border-radius:3px; cursor:pointer; display:flex; align-items:center; justify-content:center; padding:3px; outline:none; }
-.lb:focus, .lb:hover { border-color:#00e5ff; }
+.lb:focus,.lb:hover { border-color:#00e5ff; }
 .lb.on { border-color:#00e5ff; background:rgba(0,229,255,.1); }
 .lb svg { fill:#224; }
-.lb.on svg, .lb:focus svg, .lb:hover svg { fill:#00e5ff; }
+.lb.on svg,.lb:focus svg,.lb:hover svg { fill:#00e5ff; }
+
+.abanner {
+position:fixed; top:0; left:0; right:0; padding:14px;
+background:rgba(255,64,96,.15); border-bottom:2px solid #ff4060;
+font-size:18px; font-weight:bold; letter-spacing:3px; color:#ff4060;
+text-align:center; z-index:300; display:none;
+}
+.abanner.show { display:block; }
 
 #mcanvas { display:none; }
 </style>
@@ -192,13 +188,21 @@ padding:0 28px; z-index:100;
 </head>
 <body>
 
-<!-- FEEDS -->
+<!-- ══ STEP 1: GESTURE UNLOCK SPLASH ══
+     Google TV REQUIRES a real user interaction before any video plays.
+     This is shown immediately. User presses OK on remote → splash gone → videos autoplay. -->
 
-<div id="feeds" class="n1"></div>
+<div id="splash">
+  <h1>SENTI<span>NEL</span></h1>
+  <p>TV · CCTV MONITOR</p>
+  <button class="press-btn" id="splashBtn">
+    PRESS OK TO START
+  </button>
+</div>
 
-<!-- SETUP OVERLAY -->
+<!-- ══ STEP 2: SETUP (connect cameras) ══ -->
 
-<div id="setup">
+<div id="setup" class="hidden">
   <div class="card">
     <h1>SENTI<span>NEL</span></h1>
     <p class="sub">TV · CCTV MONITOR</p>
@@ -207,92 +211,127 @@ padding:0 28px; z-index:100;
 <div class="pin-box">
   <div class="lbl">YOUR TV PIN — TYPE THIS ON YOUR PHONE</div>
   <div class="pin-digits" id="pinDigits">
-    <span style="color:#336;font-size:14px;letter-spacing:2px">Generating…</span>
+    <span style="color:#446;font-size:14px;letter-spacing:2px">Generating…</span>
   </div>
   <div class="pin-hint">Open <strong>sentinel-cam.html</strong> on phone → START → type this PIN → STREAM →</div>
 </div>
 
 <div class="steps">
-  <div class="step"><div class="n">1</div><div class="t">Open <strong>sentinel-cam.html</strong> on phone</div></div>
+  <div class="step"><div class="n">1</div><div class="t">Open <strong>sentinel-cam.html</strong></div></div>
   <div class="step"><div class="n">2</div><div class="t">Tap <strong>START CAMERA</strong></div></div>
-  <div class="step"><div class="n">3</div><div class="t">Type <strong>PIN above</strong> in Stream field</div></div>
+  <div class="step"><div class="n">3</div><div class="t">Type <strong>PIN above</strong></div></div>
   <div class="step"><div class="n">4</div><div class="t">Tap <strong>STREAM →</strong></div></div>
 </div>
 
-<div class="kbd-disp" id="kdisp">
-  <div class="kbd-typed" id="ktyped"></div>
-  <div class="cursor"></div>
-</div>
-
+<div class="kbd-disp" id="kdisp"><div class="kbd-typed" id="ktyped"></div><div class="cursor"></div></div>
 <div class="keys">
-  <button class="k" onclick="kt('S')">S</button>
-  <button class="k" onclick="kt('N')">N</button>
-  <button class="k" onclick="kt('T')">T</button>
-  <button class="k" onclick="kt('-')">-</button>
-  <button class="k" onclick="kt('1')">1</button>
-  <button class="k" onclick="kt('2')">2</button>
-  <button class="k" onclick="kt('3')">3</button>
-  <button class="k" onclick="kt('4')">4</button>
-  <button class="k" onclick="kt('5')">5</button>
-  <button class="k" onclick="kt('6')">6</button>
-  <button class="k" onclick="kt('7')">7</button>
-  <button class="k" onclick="kt('8')">8</button>
-  <button class="k" onclick="kt('9')">9</button>
-  <button class="k" onclick="kt('0')">0</button>
+  <button class="k" onclick="kt('S')">S</button><button class="k" onclick="kt('N')">N</button>
+  <button class="k" onclick="kt('T')">T</button><button class="k" onclick="kt('-')">-</button>
+  <button class="k" onclick="kt('1')">1</button><button class="k" onclick="kt('2')">2</button>
+  <button class="k" onclick="kt('3')">3</button><button class="k" onclick="kt('4')">4</button>
+  <button class="k" onclick="kt('5')">5</button><button class="k" onclick="kt('6')">6</button>
+  <button class="k" onclick="kt('7')">7</button><button class="k" onclick="kt('8')">8</button>
+  <button class="k" onclick="kt('9')">9</button><button class="k" onclick="kt('0')">0</button>
   <button class="k del" onclick="kb()">⌫ DEL</button>
   <button class="k go" onclick="connectCam()">▶ CONNECT</button>
 </div>
-
-<div class="status" id="status"></div>
+<div class="st" id="st"></div>
 ```
 
   </div>
 </div>
 
-<!-- FOOTER -->
+<!-- ══ MAIN: FEEDS ══ -->
+
+<div id="feeds" class="n1"></div>
+
+<div id="abanner"></div>
 
 <div id="footer">
-  <div class="ftr-pin">
-    <div class="ftr-pin-l">TV PIN</div>
-    <div class="ftr-pin-v" id="ftrPin">—</div>
-  </div>
-  <div class="ftr-ev" id="ftrEv"></div>
+  <div class="fpin"><div class="fpin-l">TV PIN</div><div class="fpin-v" id="fpin">—</div></div>
+  <div class="fev-bar" id="fevBar"></div>
   <div class="lbtns">
     <button class="lb on" id="lb1" onclick="setLayout(1)"><svg viewBox="0 0 18 14" width="16"><rect x="1" y="1" width="16" height="12" rx="1"/></svg></button>
     <button class="lb" id="lb2" onclick="setLayout(2)"><svg viewBox="0 0 18 14" width="16"><rect x="1" y="1" width="7" height="12" rx="1"/><rect x="10" y="1" width="7" height="12" rx="1"/></svg></button>
     <button class="lb" id="lb4" onclick="setLayout(4)"><svg viewBox="0 0 18 14" width="16"><rect x="1" y="1" width="7" height="5" rx="1"/><rect x="10" y="1" width="7" height="5" rx="1"/><rect x="1" y="8" width="7" height="5" rx="1"/><rect x="10" y="8" width="7" height="5" rx="1"/></svg></button>
-    <button class="lb" onclick="document.getElementById('setup').classList.remove('hidden')" style="border-color:rgba(0,255,136,.4)"><svg viewBox="0 0 18 18" width="16"><path d="M9 3v12M3 9h12" stroke="#00ff88" stroke-width="2.5" stroke-linecap="round"/></svg></button>
+    <button class="lb" onclick="showSetup()" style="border-color:rgba(0,255,136,.4)"><svg viewBox="0 0 18 18" width="16"><path d="M9 3v12M3 9h12" stroke="#00ff88" stroke-width="2.5" stroke-linecap="round"/></svg></button>
   </div>
 </div>
 
 <canvas id="mcanvas"></canvas>
 
 <script>
-// ════════════════════════════════════════════
-//  SENTINEL TV
-//  Signaling: Firebase REST (pure HTTPS fetch)
-//  NO PeerJS, NO WebSocket, NO external libs
-// ════════════════════════════════════════════
+// ════════════════════════════════════════════════════
+//  SENTINEL TV  — Firebase REST signaling, no PeerJS
+// ════════════════════════════════════════════════════
 
+// ★ Your Firebase URL ★
 const FB = 'https://sentinal-cam-default-rtdb.asia-southeast1.firebasedatabase.app';
 
 const T = {
-  pin: null,
-  cams: [],
-  peers: {},
-  motionEvt: 0,
-  startTime: null,
-  motionOn: true,
-  animId: null,
-  layout: 1
+  pin: null, peers: {}, cams: [],
+  motionEvt: 0, startTime: null, motionOn: true,
+  animId: null, layout: 1, alertT: null,
+  gestureUnlocked: false  // tracks whether user has interacted
 };
 
-// ── Firebase helpers ──
+// ════════════════════════════════════════════════════
+//  GESTURE UNLOCK
+//  Google TV will not autoplay video without this.
+//  Show splash → user presses OK → gesture recorded →
+//  splash dismissed → videos can now autoplay freely.
+// ════════════════════════════════════════════════════
+function unlockGesture() {
+  if (T.gestureUnlocked) return;
+  T.gestureUnlocked = true;
+
+  // Hide splash
+  document.getElementById('splash').classList.add('gone');
+
+  // Show setup
+  document.getElementById('setup').classList.remove('hidden');
+
+  // Init peer signaling now that we have user gesture
+  init();
+
+  // Play any videos that are already waiting
+  T.cams.forEach(cam => {
+    cam.vid.muted = true;
+    cam.vid.play().catch(() => {});
+  });
+}
+
+// Splash button click
+document.getElementById('splashBtn').addEventListener('click', unlockGesture);
+
+// ANY key on remote also works
+document.addEventListener('keydown', e => {
+  if (!T.gestureUnlocked) {
+    unlockGesture();
+    return;
+  }
+  // Normal key handling when unlocked
+  const setupVisible = !document.getElementById('setup').classList.contains('hidden');
+  if (setupVisible) {
+    if (/^[SNT0-9\-]$/i.test(e.key)) { kt(e.key); return; }
+    if (e.key === 'Backspace') { kb(); return; }
+    if (e.key === 'Enter') { connectCam(); return; }
+    if (e.key === 'Escape') { document.getElementById('setup').classList.add('hidden'); return; }
+  } else {
+    if (e.key === '1') setLayout(1);
+    if (e.key === '2') setLayout(2);
+    if (e.key === '4') setLayout(4);
+    if (e.key === 'a' || e.key === 'A') showSetup();
+  }
+});
+
+// ════════════════════════════════════════════════════
+//  FIREBASE SIGNALING
+// ════════════════════════════════════════════════════
 async function fbSet(path, data) {
   try {
     await fetch(`${FB}/${path}.json`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      method:'PUT', headers:{'Content-Type':'application/json'},
       body: JSON.stringify(data)
     });
   } catch(e) {}
@@ -301,132 +340,114 @@ async function fbGet(path) {
   try {
     const r = await fetch(`${FB}/${path}.json`);
     if (!r.ok) return null;
-    const j = await r.json();
-    return j;
+    return await r.json();
   } catch(e) { return null; }
 }
-async function fbDelete(path) {
-  try { await fetch(`${FB}/${path}.json`, { method: 'DELETE' }); } catch(e) {}
+async function fbDel(path) {
+  try { await fetch(`${FB}/${path}.json`, {method:'DELETE'}); } catch(e) {}
 }
-
-// ── Send a message to someone's inbox ──
 async function send(toPin, msg) {
   const key = Date.now() + '_' + Math.random().toString(36).slice(2,6);
   await fbSet(`inbox/${toPin}/${key}`, { ...msg, from: T.pin });
 }
 
-// ── Generate PIN & start ──
 function init() {
   T.pin = 'SNT-' + Math.floor(1000 + Math.random() * 9000);
   showPin(T.pin);
-  document.getElementById('ftrPin').textContent = T.pin;
-  setSt('ok', '✅ Ready — type the PIN above on your phone');
+  document.getElementById('fpin').textContent = T.pin;
+  setSt('ok', '✅ Ready — type PIN ' + T.pin + ' on your phone');
   startPolling();
 }
 
 function showPin(pin) {
-  const digits = pin.replace('SNT-','');
+  const d = pin.replace('SNT-','');
   document.getElementById('pinDigits').innerHTML =
     `<span class="pin-pre">SNT-</span>` +
-    digits.split('').map(d => `<span class="pin-d">${d}</span>`).join('');
+    d.split('').map(c=>`<span class="pin-d">${c}</span>`).join('');
 }
 
-// ── Poll TV's inbox ──
 function startPolling() {
   setInterval(async () => {
     const inbox = await fbGet(`inbox/${T.pin}`);
     if (!inbox) return;
-
     for (const [key, msg] of Object.entries(inbox)) {
-      await fbDelete(`inbox/${T.pin}/${key}`);
+      await fbDel(`inbox/${T.pin}/${key}`);
       try {
-        if (msg.type === 'offer' && msg.from && !T.peers[msg.from]) {
-          receiveOffer(msg.from, msg.sdp);
-        } else if (msg.type === 'answer' && msg.from && T.peers[msg.from]) {
-          await T.peers[msg.from].setRemoteDescription({ type:'answer', sdp: msg.sdp });
-        } else if (msg.type === 'ice' && msg.from && T.peers[msg.from]) {
-          await T.peers[msg.from].addIceCandidate(new RTCIceCandidate(msg.candidate)).catch(()=>{});
-        }
+        if (msg.type==='offer' && msg.from && !T.peers[msg.from]) receiveOffer(msg.from, msg.sdp);
+        else if (msg.type==='answer' && T.peers[msg.from]) await T.peers[msg.from].setRemoteDescription({type:'answer',sdp:msg.sdp});
+        else if (msg.type==='ice' && T.peers[msg.from]) await T.peers[msg.from].addIceCandidate(new RTCIceCandidate(msg.candidate)).catch(()=>{});
       } catch(e) {}
     }
   }, 2000);
 }
 
-// ── Receive offer from cam ──
 async function receiveOffer(camPin, offerSdp) {
-  setSt('', `📡 Camera connecting…`);
+  setSt('', '📡 Camera connecting…');
   const pc = makePeer(camPin);
-  await pc.setRemoteDescription({ type:'offer', sdp: offerSdp });
+  await pc.setRemoteDescription({type:'offer', sdp:offerSdp});
   const answer = await pc.createAnswer();
   await pc.setLocalDescription(answer);
-  await send(camPin, { type:'answer', sdp: pc.localDescription.sdp });
+  await send(camPin, {type:'answer', sdp:pc.localDescription.sdp});
 }
 
-// ── TV calls cam by typing its PIN ──
 async function connectCam() {
   const camPin = kbdVal.trim().toUpperCase();
   if (!camPin || !camPin.startsWith('SNT-')) { setSt('err','Type a camera PIN like SNT-1234'); return; }
-  if (T.peers[camPin]) { setSt('err','Already connected to '+camPin); return; }
+  if (T.peers[camPin]) { setSt('err','Already connected'); return; }
   kc();
   setSt('', `Calling ${camPin}…`);
-
   const pc = makePeer(camPin);
-  pc.addTransceiver('video', { direction:'recvonly' });
-  pc.addTransceiver('audio', { direction:'recvonly' });
-
+  pc.addTransceiver('video',{direction:'recvonly'});
+  pc.addTransceiver('audio',{direction:'recvonly'});
   const offer = await pc.createOffer();
   await pc.setLocalDescription(offer);
-  await send(camPin, { type:'offer', sdp: pc.localDescription.sdp });
+  await send(camPin, {type:'offer', sdp:pc.localDescription.sdp});
   setSt('', 'Offer sent — waiting for camera…');
 }
 
-// ── Create RTCPeerConnection ──
 function makePeer(remotePin) {
   const pc = new RTCPeerConnection({
-    iceServers: [
-      { urls:'stun:stun.l.google.com:19302' },
-      { urls:'stun:stun1.l.google.com:19302' },
-      { urls:'stun:stun2.l.google.com:19302' },
-      { urls:'stun:stun3.l.google.com:19302' },
+    iceServers:[
+      {urls:'stun:stun.l.google.com:19302'},
+      {urls:'stun:stun1.l.google.com:19302'},
+      {urls:'stun:stun2.l.google.com:19302'},
     ]
   });
   T.peers[remotePin] = pc;
 
   pc.onicecandidate = e => {
-    if (e.candidate) send(remotePin, { type:'ice', candidate: e.candidate.toJSON() });
+    if (e.candidate) send(remotePin, {type:'ice', candidate:e.candidate.toJSON()});
   };
 
   pc.ontrack = e => {
-    if (!e.streams || !e.streams[0]) return;
-    const stream = e.streams[0];
-    if (!stream.getVideoTracks().length) return;
-    const label = `CAM-${T.cams.length + 1}`;
-    addCamCell(remotePin, stream, label);
+    if (!e.streams || !e.streams[0] || !e.streams[0].getVideoTracks().length) return;
+    const label = `CAM-${T.cams.length+1}`;
+    addCam(remotePin, e.streams[0], label);
     document.getElementById('setup').classList.add('hidden');
     setSt('ok', `✅ ${label} connected`);
-    ftrLog('s', `📡 ${label}`);
+    fev('s', `📡 ${label} connected`);
   };
 
   pc.onconnectionstatechange = () => {
-    if (pc.connectionState === 'connected') {
-      setSt('ok', '✅ Streaming live');
-    }
-    if (pc.connectionState === 'disconnected' || pc.connectionState === 'failed') {
-      removeCamCell(remotePin);
-      delete T.peers[remotePin];
+    if (pc.connectionState==='disconnected'||pc.connectionState==='failed') {
+      removeCam(remotePin); delete T.peers[remotePin];
     }
   };
 
   return pc;
 }
 
-// ── Add/remove cam cell ──
-function addCamCell(id, stream, label) {
+// ════════════════════════════════════════════════════
+//  CAM CELLS
+//  Because gesture is already unlocked by the time
+//  any camera connects, video.play() will ALWAYS work.
+// ════════════════════════════════════════════════════
+function addCam(id, stream, label) {
   const feeds = document.getElementById('feeds');
   const div = document.createElement('div');
-  div.className = 'cam'; div.id = `cam-${id}`;
-  div.innerHTML = `
-    <video id="v-${id}" autoplay muted playsinline webkit-playsinline x-webkit-airplay="allow"></video>
+  div.className='cam'; div.id=`cam-${id}`;
+  div.innerHTML=`
+    <video id="v-${id}" autoplay muted playsinline webkit-playsinline></video>
     <div class="cam-live"><div class="d"></div>LIVE</div>
     <div class="cam-label">${label}</div>
     <div class="cc tl"></div><div class="cc tr"></div>
@@ -436,183 +457,119 @@ function addCamCell(id, stream, label) {
 
   const vid = document.getElementById(`v-${id}`);
   vid.muted = true;
-  vid.volume = 0;
   vid.srcObject = stream;
 
-  // Aggressive play loop — keeps retrying until video plays
-  let attempts = 0;
-  function tryPlay() {
-    vid.muted = true;
-    vid.volume = 0;
-    vid.play().catch(() => {
-      if (++attempts < 30) setTimeout(tryPlay, 600);
-    });
-  }
+  // Gesture already unlocked — play() will succeed immediately
+  vid.play().catch(() => {
+    // tiny retry if needed
+    setTimeout(() => { vid.muted=true; vid.play().catch(()=>{}); }, 300);
+  });
 
-  vid.addEventListener('loadedmetadata', tryPlay);
-  vid.addEventListener('canplay', tryPlay);
-  tryPlay();
-  setTimeout(tryPlay, 300);
-  setTimeout(tryPlay, 800);
-  setTimeout(tryPlay, 1500);
-  setTimeout(tryPlay, 3000);
-
-  // Watchdog: every 2s force-play if paused
+  // Watchdog
   const wd = setInterval(() => {
     if (!document.getElementById(`v-${id}`)) { clearInterval(wd); return; }
-    vid.muted = true;
     if (!vid.srcObject) vid.srcObject = stream;
-    if (vid.paused) vid.play().catch(() => {});
-  }, 2000);
+    if (vid.paused) { vid.muted=true; vid.play().catch(()=>{}); }
+  }, 3000);
 
-  T.cams.push({ id, stream, label, vid, mfl: document.getElementById(`mf-${id}`), prevFrame:null, lastMotion:0 });
-  if (!T.startTime) { T.startTime = Date.now(); startUptime(); }
-  updateFeedsLayout();
-  if (!T.animId) motionLoop();
+  T.cams.push({id, stream, label, vid, mfl:document.getElementById(`mf-${id}`), prevFrame:null, lastMotion:0});
+  if (!T.startTime) { T.startTime=Date.now(); startUptime(); }
+  updateLayout();
 }
 
-function removeCamCell(id) {
-  T.cams = T.cams.filter(c => c.id !== id);
+function removeCam(id) {
+  T.cams = T.cams.filter(c=>c.id!==id);
   const el = document.getElementById(`cam-${id}`);
   if (el) el.remove();
-  updateFeedsLayout();
+  updateLayout();
 }
 
-// ── Motion detection ──
-function motionLoop() {
+// ════════════════════════════════════════════════════
+//  MOTION DETECTION
+// ════════════════════════════════════════════════════
+function startMotion() {
   const mc = document.getElementById('mcanvas');
   const mx = mc.getContext('2d');
   function loop() {
     T.cams.forEach(cam => {
-      const v = cam.vid;
-      if (!v || v.readyState < 2 || !v.videoWidth) return;
-      mc.width = v.videoWidth; mc.height = v.videoHeight;
-      mx.drawImage(v, 0, 0, mc.width, mc.height);
-      const fr = mx.getImageData(0, 0, mc.width, mc.height);
+      const v=cam.vid;
+      if (!v||v.readyState<2||!v.videoWidth) return;
+      mc.width=v.videoWidth; mc.height=v.videoHeight;
+      mx.drawImage(v,0,0,mc.width,mc.height);
+      const fr=mx.getImageData(0,0,mc.width,mc.height);
       if (cam.prevFrame) {
-        let d=0, n=0;
-        for (let i=0; i<fr.data.length; i+=20) {
-          const diff = (Math.abs(fr.data[i]-cam.prevFrame.data[i]) + Math.abs(fr.data[i+1]-cam.prevFrame.data[i+1]) + Math.abs(fr.data[i+2]-cam.prevFrame.data[i+2])) / 3;
-          if (diff > 22) d++;
+        let d=0,n=0;
+        for(let i=0;i<fr.data.length;i+=20){
+          if((Math.abs(fr.data[i]-cam.prevFrame.data[i])+Math.abs(fr.data[i+1]-cam.prevFrame.data[i+1])+Math.abs(fr.data[i+2]-cam.prevFrame.data[i+2]))/3>22)d++;
           n++;
         }
-        if ((d/n)*100 > 14) {
-          const now = Date.now();
-          if (now - cam.lastMotion > 3500) {
-            cam.lastMotion = now; T.motionEvt++;
-            cam.mfl.classList.add('on'); setTimeout(() => cam.mfl.classList.remove('on'), 250);
-            ftrLog('m', `Motion · ${cam.label}`);
+        if((d/n)*100>14){
+          const now=Date.now();
+          if(now-cam.lastMotion>3500){
+            cam.lastMotion=now; T.motionEvt++;
+            cam.mfl.classList.add('on'); setTimeout(()=>cam.mfl.classList.remove('on'),250);
+            showAlert(`⚡ MOTION — ${cam.label}`);
+            fev('m',`Motion · ${cam.label}`);
           }
         }
       }
-      cam.prevFrame = fr;
+      cam.prevFrame=fr;
     });
-    T.animId = requestAnimationFrame(loop);
+    T.animId=requestAnimationFrame(loop);
   }
   loop();
 }
 
-// ── Layout ──
+// ════════════════════════════════════════════════════
+//  HELPERS
+// ════════════════════════════════════════════════════
 function setLayout(n) {
-  T.layout = n;
-  ['lb1','lb2','lb4'].forEach(id => document.getElementById(id).classList.remove('on'));
-  const m = {1:'lb1',2:'lb2',4:'lb4'};
-  if (m[n]) document.getElementById(m[n]).classList.add('on');
-  updateFeedsLayout();
+  T.layout=n;
+  ['lb1','lb2','lb4'].forEach(id=>document.getElementById(id).classList.remove('on'));
+  const m={1:'lb1',2:'lb2',4:'lb4'}; if(m[n]) document.getElementById(m[n]).classList.add('on');
+  updateLayout();
 }
-function updateFeedsLayout() {
-  const n = T.cams.length;
-  document.getElementById('feeds').className = `n${n<=1?1:n<=2?2:n<=3?3:4}`;
+function updateLayout() {
+  const n=T.cams.length;
+  document.getElementById('feeds').className=`n${n<=1?1:n<=2?2:n<=3?3:4}`;
+  if (n>0 && !T.animId) startMotion();
 }
-
-// ── Uptime ──
 function startUptime() {
-  setInterval(() => {
-    const s = Math.floor((Date.now()-T.startTime)/1000);
-    // Could add uptime display here
-  }, 1000);
+  setInterval(()=>{
+    if(!T.startTime) return;
+    const s=Math.floor((Date.now()-T.startTime)/1000);
+    // uptime available if needed
+  },1000);
+}
+function showAlert(msg) {
+  const b=document.getElementById('abanner');
+  b.textContent=msg; b.classList.add('show');
+  clearTimeout(T.alertT); T.alertT=setTimeout(()=>b.classList.remove('show'),5000);
+}
+function fev(type,msg) {
+  const bar=document.getElementById('fevBar');
+  const d=document.createElement('div');
+  d.className=`fev ${type}`; d.textContent=msg;
+  bar.insertBefore(d,bar.firstChild);
+  while(bar.children.length>4) bar.removeChild(bar.lastChild);
+}
+function setSt(cls,msg) {
+  const el=document.getElementById('st');
+  el.className=`st${cls?' '+cls:''}`;
+  el.textContent=msg;
+}
+function showSetup() { document.getElementById('setup').classList.remove('hidden'); }
+
+let kbdVal='';
+function kt(ch){kbdVal+=ch.toUpperCase();rk();}
+function kb(){kbdVal=kbdVal.slice(0,-1);rk();}
+function kc(){kbdVal='';rk();}
+function rk(){
+  document.getElementById('ktyped').textContent=kbdVal;
+  document.getElementById('kdisp').classList.toggle('on',kbdVal.length>0);
 }
 
-// ── Footer log ──
-function ftrLog(type, msg) {
-  const bar = document.getElementById('ftrEv');
-  const d = document.createElement('div');
-  d.className = `fev ${type}`; d.textContent = msg;
-  bar.insertBefore(d, bar.firstChild);
-  while (bar.children.length > 4) bar.removeChild(bar.lastChild);
-}
-
-// ── Status ──
-function setSt(cls, msg) {
-  const el = document.getElementById('status');
-  el.className = `status${cls?' '+cls:''}`;
-  el.textContent = msg;
-}
-
-// ── Keyboard ──
-let kbdVal = '';
-function kt(ch) { kbdVal += ch.toUpperCase(); rk(); }
-function kb() { kbdVal = kbdVal.slice(0,-1); rk(); }
-function kc() { kbdVal = ''; rk(); }
-function rk() {
-  document.getElementById('ktyped').textContent = kbdVal;
-  document.getElementById('kdisp').classList.toggle('on', kbdVal.length > 0);
-}
-
-// ── Clock ──
-setInterval(() => {
-  // nothing needed — kept simple
-}, 1000);
-
-// ── GO ──
-init();
-
-// ── Tap to play (Google TV gesture unlock) ──
-function tapPlay(id) {
-  const vid = document.getElementById(`v-${id}`);
-  const tp = document.getElementById(`tp-${id}`);
-  if (!vid) return;
-  vid.muted = true;
-  vid.volume = 0;
-  vid.play().then(() => {
-    if (tp) tp.classList.add('hidden');
-  }).catch(() => {});
-  // Also play all other paused videos
-  playAllVideos();
-}
-
-function playAllVideos() {
-  T.cams.forEach(cam => {
-    if (cam.vid && cam.vid.paused) {
-      cam.vid.muted = true;
-      cam.vid.volume = 0;
-      cam.vid.play().then(() => {
-        const tp = document.getElementById(`tp-${cam.id}`);
-        if (tp) tp.classList.add('hidden');
-      }).catch(() => {});
-    }
-  });
-}
-
-// ── Unlock all videos on any user interaction ──
-document.addEventListener('click', playAllVideos, { passive: true });
-document.addEventListener('keydown', e => {
-  // First: try to play all videos on ANY key (TV remote gesture unlock)
-  playAllVideos();
-
-  const setupHidden = document.getElementById('setup').classList.contains('hidden');
-  if (!setupHidden) {
-    if (/^[SNT0-9\-]$/i.test(e.key)) { kt(e.key); return; }
-    if (e.key === 'Backspace') { kb(); return; }
-    if (e.key === 'Enter') { connectCam(); return; }
-    if (e.key === 'Escape') { document.getElementById('setup').classList.add('hidden'); return; }
-  } else {
-    if (e.key === '1') setLayout(1);
-    if (e.key === '2') setLayout(2);
-    if (e.key === '4') setLayout(4);
-    if (e.key === 'a' || e.key === 'A') document.getElementById('setup').classList.remove('hidden');
-  }
-});
+setInterval(()=>{}, 1000); // keep alive
 </script>
 
 </body>
