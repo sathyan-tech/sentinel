@@ -5,7 +5,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>SENTINEL — Camera</title>
-<script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow+Condensed:wght@700;900&display=swap');
 
@@ -284,56 +283,193 @@ z-index:500;display:none;white-space:nowrap;
 
 <script>
 const S = {
-  peer: null, myId: null,
+  myPin: null,
   stream: null,
-  calls: [], // active calls to viewers
   viewers: [],
+  conns: {},
 };
+
+const NTFY = 'https://ntfy.sh';
 
 // ─── CLOCK ───
 setInterval(()=>{ document.getElementById('hudTime').textContent = new Date().toLocaleTimeString('en-GB'); }, 1000);
 
-// ─── PEER INIT ───
+// ─── INIT PIN ───
 function initPeer() {
-  const pin = 'SNT-' + Math.floor(1000 + Math.random() * 9000);
+  S.myPin = 'SNT-' + Math.floor(1000 + Math.random() * 9000);
+  document.getElementById('myCamId').textContent = S.myPin;
+  log('Ready', `Camera PIN: ${S.myPin}`);
+  // Poll for incoming offers from TV (if TV types our PIN)
+  startCamPolling();
+}
 
+// ntfy helper
+async function ntfyPost(channel, data) {
   try {
-    S.peer = new Peer(pin);
-  } catch(e) {
-    document.getElementById('myCamId').textContent = 'PeerJS load error';
-    return;
-  }
+    await fetch(`${NTFY}/${channel}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify(data)
+    });
+  } catch(e) {}
+}
 
-  S.peer.on('open', id => {
-    S.myId = id;
-    document.getElementById('myCamId').textContent = id;
-    log(`Ready`, `Camera PIN: ${id}`);
+// ─── POLL for TV offers addressed to our PIN ───
+let camPollLastId = '';
+function startCamPolling() {
+  setInterval(async () => {
+    try {
+      const r = await fetch(`${NTFY}/sentinel-cam-${S.myPin}/json?poll=1&since=30s`, {
+        headers: { Accept: 'application/x-ndjson' }
+      });
+      if (!r.ok) return;
+      const txt = await r.text();
+      if (!txt.trim()) return;
+      txt.trim().split('\n').forEach(async line => {
+        try {
+          const ev = JSON.parse(line);
+          if (ev.id === camPollLastId) return;
+          camPollLastId = ev.id;
+          const data = JSON.parse(ev.message || 'null');
+          if (!data) return;
+          if (data.type === 'offer' && !S.conns[data.tvPin]) {
+            await handleTVOffer(data.tvPin, data.sdp);
+          } else if (data.type === 'ice-batch') {
+            const pc = S.conns[data.tvPin || Object.keys(S.conns)[0]];
+            if (pc) for (const c of (data.candidates||[])) {
+              try { await pc.addIceCandidate(new RTCIceCandidate(c)); } catch(e) {}
+            }
+          }
+        } catch(e) {}
+      });
+    } catch(e) {}
+  }, 2500);
+}
+
+// ─── HANDLE OFFER FROM TV ───
+async function handleTVOffer(tvPin, offerSdp) {
+  if (!S.stream) { log('TV tried to connect — start camera first', ''); return; }
+  log('TV connecting…', tvPin);
+
+  const pc = new RTCPeerConnection({
+    iceServers: [
+      { urls: 'stun:stun.l.google.com:19302' },
+      { urls: 'stun:stun1.l.google.com:19302' },
+    ]
   });
+  S.conns[tvPin] = pc;
 
-  S.peer.on('error', e => {
-    if (e.type === 'unavailable-id') {
-      S.peer.destroy();
-      initPeer();
-    } else {
-      log('Peer error', `${e.type}`);
-      document.getElementById('myCamId').textContent = `Error: ${e.type} — reload page`;
+  // Add our stream
+  S.stream.getTracks().forEach(t => pc.addTrack(t, S.stream));
+
+  // Collect ICE and send to TV
+  const myIce = [];
+  let iceFlush = null;
+  pc.onicecandidate = e => {
+    if (!e.candidate) return;
+    myIce.push(e.candidate.toJSON());
+    clearTimeout(iceFlush);
+    iceFlush = setTimeout(async () => {
+      await ntfyPost(`sentinel-tv-${tvPin}`, { type: 'ice-batch', candidates: myIce.splice(0) });
+    }, 400);
+  };
+
+  pc.onconnectionstatechange = () => {
+    if (pc.connectionState === 'connected') {
+      addViewer(tvPin); updateStreamStatus();
+      log('Connected to TV', tvPin.slice(0,10));
     }
+    if (pc.connectionState === 'disconnected' || pc.connectionState === 'failed') {
+      removeViewer(tvPin);
+    }
+  };
+
+  await pc.setRemoteDescription({ type: 'offer', sdp: offerSdp });
+  const answer = await pc.createAnswer();
+  await pc.setLocalDescription(answer);
+
+  await ntfyPost(`sentinel-tv-${tvPin}`, { type: 'answer', sdp: pc.localDescription.sdp });
+}
+
+// ─── CONNECT TO TV/VIEWER by typing their PIN ───
+async function connectToViewer() {
+  if (!S.stream) { toast('Start your camera first!'); return; }
+  const tvPin = document.getElementById('viewerIdInput').value.trim().toUpperCase();
+  if (!tvPin) { toast('Enter TV PIN or Viewer ID'); return; }
+  document.getElementById('viewerIdInput').value = '';
+
+  log('Calling…', tvPin);
+
+  const pc = new RTCPeerConnection({
+    iceServers: [
+      { urls: 'stun:stun.l.google.com:19302' },
+      { urls: 'stun:stun1.l.google.com:19302' },
+    ]
+  });
+  S.conns[tvPin] = pc;
+
+  // Add our stream
+  S.stream.getTracks().forEach(t => pc.addTrack(t, S.stream));
+
+  // Collect ICE and batch-send to TV
+  const myIce = [];
+  let iceFlush = null;
+  pc.onicecandidate = e => {
+    if (!e.candidate) return;
+    myIce.push(e.candidate.toJSON());
+    clearTimeout(iceFlush);
+    iceFlush = setTimeout(async () => {
+      await ntfyPost(`sentinel-tv-${tvPin}`, { type: 'ice', camId: S.myPin, candidate: myIce[myIce.length-1] });
+      // Also batch
+      await ntfyPost(`sentinel-tv-${tvPin}`, { type: 'ice-batch', candidates: myIce.splice(0) });
+    }, 400);
+  };
+
+  pc.onconnectionstatechange = () => {
+    if (pc.connectionState === 'connected') {
+      addViewer(tvPin); updateStreamStatus();
+      log('Streaming to TV', tvPin);
+    }
+    if (pc.connectionState === 'disconnected' || pc.connectionState === 'failed') {
+      removeViewer(tvPin);
+    }
+  };
+
+  const offer = await pc.createOffer();
+  await pc.setLocalDescription(offer);
+
+  // Post offer to TV's channel
+  await ntfyPost(`sentinel-tv-${tvPin}`, {
+    type: 'offer', camId: S.myPin, sdp: pc.localDescription.sdp
   });
 
-  S.peer.on('disconnected', () => {
-    try { S.peer.reconnect(); } catch(x) {}
-  });
+  log('Offer sent — waiting for TV…', '');
 
-  S.peer.on('call', call => {
-    if (!S.stream) { call.close(); return; }
-    call.answer(S.stream);
-    addViewer(call.peer);
-    call.on('close', ()=>removeViewer(call.peer));
-    call.on('error', ()=>removeViewer(call.peer));
-    S.calls.push(call);
-    log(`Viewer connected`, call.peer.slice(0,10)+'…');
-    updateStreamStatus();
-  });
+  // Poll for answer
+  let tries = 0;
+  const iv = setInterval(async () => {
+    if (++tries > 30) { clearInterval(iv); log('No response from TV', ''); return; }
+    try {
+      const r = await fetch(`${NTFY}/sentinel-cam-${S.myPin}/json?poll=1&since=60s`, { headers: { Accept: 'application/x-ndjson' } });
+      if (!r.ok) return;
+      const txt = await r.text();
+      if (!txt.trim()) return;
+      for (const line of txt.trim().split('\n')) {
+        try {
+          const ev = JSON.parse(line);
+          const data = JSON.parse(ev.message || 'null');
+          if (!data) continue;
+          if (data.type === 'answer') {
+            clearInterval(iv);
+            await pc.setRemoteDescription({ type: 'answer', sdp: data.sdp });
+            log('Answer received — connecting…', '');
+          } else if (data.type === 'ice-batch') {
+            for (const c of (data.candidates||[])) { try { await pc.addIceCandidate(new RTCIceCandidate(c)); } catch(e){} }
+          }
+        } catch(e) {}
+      }
+    } catch(e) {}
+  }, 2000);
 }
 
 // ─── ENUMERATE CAMERAS ───
