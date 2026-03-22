@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SENTINEL — TV Display</title>
+<script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap');
+
+:root {
+–bg:#020408; –panel:#070e18; –border:#0f2030;
+–accent:#00d4ff; –accent2:#ff2d55; –accent3:#00ff7f; –warn:#ffcc00;
+–text:#d0e8f0; –dim:#2a4a5a;
+–orb:‘Orbitron’,sans-serif; –mono:‘Share Tech Mono’,monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{width:100%;height:100%;background:var(–bg);color:var(–text);font-family:var(–mono);overflow:hidden;cursor:none;}
+
+body::after{content:’’;position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,212,255,.016) 3px,rgba(0,212,255,.016) 4px);pointer-events:none;z-index:9998;}
+body::before{content:’’;position:fixed;inset:0;background:radial-gradient(ellipse at center,transparent 55%,rgba(0,0,0,.72) 100%);pointer-events:none;z-index:9997;}
+
+/* HEADER */
+.hdr{position:fixed;top:0;left:0;right:0;height:68px;display:flex;align-items:center;justify-content:space-between;padding:0 44px;background:linear-gradient(180deg,rgba(2,4,8,.98) 0%,rgba(2,4,8,0) 100%);z-index:100;}
+
+.hdr-logo{display:flex;align-items:center;gap:16px;}
+.logo-hex{width:40px;height:40px;border:2px solid var(–accent);transform:rotate(45deg);display:flex;align-items:center;justify-content:center;animation:hexP 4s infinite;}
+@keyframes hexP{0%,100%{box-shadow:0 0 0 0 rgba(0,212,255,.6);}50%{box-shadow:0 0 0 12px rgba(0,212,255,0);}}
+.logo-hex::after{content:’’;width:14px;height:14px;border-radius:50%;background:var(–accent);box-shadow:0 0 16px var(–accent),0 0 32px rgba(0,212,255,.4);transform:rotate(-45deg);}
+.logo-words{display:flex;flex-direction:column;gap:1px;}
+.logo-main{font-family:var(–orb);font-size:24px;font-weight:900;letter-spacing:8px;color:#fff;text-shadow:0 0 30px rgba(0,212,255,.5);}
+.logo-main span{color:var(–accent);}
+.logo-sub{font-size:8px;letter-spacing:6px;color:var(–dim);}
+
+.hdr-stats{display:flex;align-items:center;gap:24px;}
+.hdr-stat{display:flex;flex-direction:column;align-items:center;gap:2px;}
+.hdr-stat-n{font-family:var(–orb);font-size:22px;font-weight:700;color:var(–accent);line-height:1;text-shadow:0 0 20px rgba(0,212,255,.6);}
+.hdr-stat-n.red{color:var(–accent2);text-shadow:0 0 20px rgba(255,45,85,.6);}
+.hdr-stat-l{font-size:8px;letter-spacing:3px;color:var(–dim);}
+.hdr-div{width:1px;height:30px;background:var(–border);}
+
+.hdr-right{display:flex;align-items:center;gap:20px;}
+.spill{display:flex;align-items:center;gap:8px;padding:7px 18px;border:1px solid var(–border);border-radius:30px;font-size:11px;letter-spacing:2px;color:var(–dim);}
+.spill .dot{width:8px;height:8px;border-radius:50%;background:var(–dim);}
+.spill.live{border-color:rgba(0,255,127,.4);color:var(–accent3);background:rgba(0,255,127,.05);}
+.spill.live .dot{background:var(–accent3);box-shadow:0 0 8px var(–accent3);animation:blink 1.5s infinite;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+.clk{font-family:var(–orb);font-size:20px;font-weight:700;color:var(–accent);letter-spacing:2px;text-shadow:0 0 20px rgba(0,212,255,.4);}
+
+/* FEEDS GRID */
+.feeds{position:fixed;top:68px;left:0;right:0;bottom:84px;padding:6px;display:grid;gap:5px;}
+.feeds.l1{grid-template-columns:1fr;}
+.feeds.l2{grid-template-columns:1fr 1fr;}
+.feeds.l3{grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;}
+.feeds.l3 .cam:first-child{grid-column:1/3;}
+.feeds.l4{grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;}
+.feeds.lpip{grid-template-columns:1fr;}
+.feeds.lpip .cam:not(:first-child){position:absolute;width:22%;aspect-ratio:16/9;border:2px solid var(–accent);z-index:10;box-shadow:0 0 24px rgba(0,212,255,.35);}
+.feeds.lpip .cam:nth-child(2){bottom:90px;right:14px;}
+.feeds.lpip .cam:nth-child(3){bottom:90px;right:calc(22% + 22px);}
+.feeds.lpip .cam:nth-child(4){bottom:90px;right:calc(44% + 30px);}
+
+/* CAM CELL */
+.cam{position:relative;background:#000;overflow:hidden;border:1px solid var(–border);}
+.cam video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
+.cam-hud{position:absolute;inset:0;z-index:3;pointer-events:none;}
+.cc{position:absolute;width:28px;height:28px;border-color:var(–accent);border-style:solid;opacity:.5;}
+.cc.tl{top:14px;left:14px;border-width:2px 0 0 2px;}
+.cc.tr{top:14px;right:14px;border-width:2px 2px 0 0;}
+.cc.bl{bottom:14px;left:14px;border-width:0 0 2px 2px;}
+.cc.br{bottom:14px;right:14px;border-width:0 2px 2px 0;}
+.cam-lbl{position:absolute;bottom:14px;left:16px;font-family:var(–orb);font-size:12px;font-weight:700;letter-spacing:3px;color:var(–accent);background:rgba(0,0,0,.7);padding:5px 12px;border-radius:2px;text-shadow:0 0 10px rgba(0,212,255,.5);}
+.cam-live{position:absolute;top:14px;left:16px;display:flex;align-items:center;gap:6px;font-size:10px;letter-spacing:2px;color:var(–accent3);background:rgba(0,0,0,.7);padding:4px 10px;border-radius:2px;}
+.cam-live .ld{width:7px;height:7px;border-radius:50%;background:var(–accent3);box-shadow:0 0 6px var(–accent3);animation:blink 1.5s infinite;}
+.cam-ts{position:absolute;top:14px;right:16px;font-size:10px;letter-spacing:1px;color:var(–dim);background:rgba(0,0,0,.7);padding:4px 10px;border-radius:2px;}
+.mfl{position:absolute;inset:0;z-index:4;pointer-events:none;background:rgba(255,204,0,.1);opacity:0;transition:opacity .15s;}
+.mfl.on{opacity:1;}
+.pfl{position:absolute;inset:0;z-index:4;pointer-events:none;background:rgba(255,45,85,.1);opacity:0;transition:opacity .15s;}
+.pfl.on{opacity:1;}
+.cam.alerted{animation:ab 1s ease 3;}
+@keyframes ab{0%,100%{border-color:var(–border);}50%{border-color:var(–accent2);box-shadow:0 0 40px rgba(255,45,85,.5);}}
+
+.no-cam-state{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;background:#000;}
+.no-cam-ring{width:72px;height:72px;border:1.5px solid var(–border);border-radius:50%;display:flex;align-items:center;justify-content:center;}
+.no-cam-ring svg{opacity:.18;}
+.no-cam-state p{font-family:var(–orb);font-size:11px;letter-spacing:3px;color:var(–dim);}
+
+/* Motion detection bars overlay */
+.motion-indicator{position:absolute;bottom:0;left:0;right:0;height:3px;background:var(–warn);transform:scaleX(0);transform-origin:left;transition:transform .3s ease;z-index:5;}
+.motion-indicator.active{transform:scaleX(1);}
+
+/* FOOTER */
+.ftr{position:fixed;bottom:0;left:0;right:0;height:84px;background:linear-gradient(0deg,rgba(2,4,8,.98) 0%,rgba(2,4,8,0) 100%);display:flex;align-items:flex-end;justify-content:space-between;padding:0 44px 18px;z-index:100;}
+
+.ftr-id{display:flex;flex-direction:column;gap:3px;}
+.ftr-id-lbl{font-size:8px;letter-spacing:3px;color:var(–dim);}
+.ftr-id-val{font-family:var(–orb);font-size:13px;font-weight:700;color:var(–accent);letter-spacing:2px;text-shadow:0 0 15px rgba(0,212,255,.4);}
+
+.ftr-events{display:flex;gap:8px;align-items:flex-end;max-width:55vw;overflow:hidden;}
+.fev{padding:5px 14px;background:rgba(7,14,24,.92);border:1px solid var(–border);border-radius:2px;font-size:10px;letter-spacing:1px;color:var(–dim);white-space:nowrap;animation:evs .3s ease;}
+@keyframes evs{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.fev.person{border-color:rgba(255,45,85,.5);color:var(–accent2);}
+.fev.motion{border-color:rgba(255,204,0,.4);color:var(–warn);}
+.fev.sys{border-color:rgba(0,212,255,.3);color:var(–accent);}
+
+.ftr-right{display:flex;align-items:center;gap:12px;}
+.lbtn{width:40px;height:28px;background:rgba(7,14,24,.92);border:1px solid var(–border);border-radius:3px;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:5px;transition:border-color .2s;outline:none;}
+.lbtn:hover,.lbtn:focus{border-color:var(–accent);}
+.lbtn.on{border-color:var(–accent);background:rgba(0,212,255,.1);}
+.lbtn svg{fill:var(–dim);}
+.lbtn.on svg,.lbtn:hover svg,.lbtn:focus svg{fill:var(–accent);}
+
+/* ALERT */
+.alert-wrap{position:fixed;inset:0;z-index:150;pointer-events:none;display:flex;align-items:flex-start;justify-content:center;padding-top:80px;}
+.abanner{background:rgba(255,45,85,.12);border:1px solid var(–accent2);border-radius:4px;padding:16px 48px;font-family:var(–orb);font-size:20px;font-weight:700;letter-spacing:4px;color:var(–accent2);box-shadow:0 0 50px rgba(255,45,85,.3);display:none;animation:ain .3s ease;}
+@keyframes ain{from{opacity:0;transform:translateY(-12px)}to{opacity:1;transform:none}}
+.abanner.show{display:block;}
+
+/* SETUP OVERLAY */
+.setup{position:fixed;inset:0;background:rgba(2,4,8,.97);display:flex;align-items:center;justify-content:center;z-index:200;backdrop-filter:blur(10px);}
+.setup.gone{display:none;}
+.setup-card{width:min(680px,90vw);border:1px solid var(–border);border-radius:10px;background:var(–panel);padding:50px;}
+.s-logo{font-family:var(–orb);font-size:34px;font-weight:900;letter-spacing:10px;color:#fff;text-align:center;text-shadow:0 0 40px rgba(0,212,255,.4);}
+.s-logo span{color:var(–accent);}
+.s-tag{font-size:9px;letter-spacing:5px;color:var(–dim);text-align:center;margin-bottom:40px;margin-top:4px;}
+
+.s-id-box{background:rgba(0,0,0,.5);border:1px solid var(–border);border-radius:6px;padding:22px 30px;margin-bottom:30px;text-align:center;}
+.s-id-lbl{font-size:9px;letter-spacing:3px;color:var(–dim);margin-bottom:10px;}
+.s-id{font-family:var(–orb);font-size:clamp(13px,1.8vw,20px);font-weight:700;color:var(–accent);letter-spacing:3px;word-break:break-all;line-height:1.5;text-shadow:0 0 20px rgba(0,212,255,.4);}
+.s-id-hint{font-size:10px;color:var(–dim);margin-top:8px;letter-spacing:1px;}
+
+.s-div{display:flex;align-items:center;gap:14px;margin:26px 0;color:var(–dim);font-size:10px;letter-spacing:3px;}
+.s-div::before,.s-div::after{content:’’;flex:1;height:1px;background:var(–border);}
+
+.s-row{display:flex;gap:10px;margin-bottom:10px;}
+.s-input{flex:1;background:rgba(0,0,0,.5);border:1px solid var(–border);color:var(–text);font-family:var(–mono);font-size:14px;padding:14px 18px;border-radius:4px;outline:none;letter-spacing:1px;}
+.s-input:focus{border-color:var(–accent);}
+.s-input::placeholder{color:var(–dim);}
+.s-btn{padding:14px 26px;background:var(–accent);color:#000;border:none;border-radius:4px;font-family:var(–orb);font-size:12px;font-weight:700;letter-spacing:2px;cursor:pointer;white-space:nowrap;}
+.s-btn:hover{background:#00b5d4;}
+
+.s-hint{font-size:10px;color:var(–dim);letter-spacing:1px;line-height:1.9;margin-top:10px;text-align:center;}
+.s-hint strong{color:var(–text);}
+.s-status{margin-top:18px;text-align:center;font-size:11px;letter-spacing:2px;color:var(–dim);min-height:28px;}
+.s-status.ok{color:var(–accent3);}
+.s-status.err{color:var(–accent2);}
+
+.spin{display:inline-block;width:10px;height:10px;border:2px solid var(–border);border-top-color:var(–accent);border-radius:50%;animation:rot .7s linear infinite;margin-right:6px;vertical-align:middle;}
+@keyframes rot{to{transform:rotate(360deg)}}
+
+/* Motion detection frame diff - invisible canvas */
+#mcanvas{display:none;}
+</style>
+
+</head>
+<body>
+
+<!-- SETUP OVERLAY -->
+
+<div class="setup" id="setup">
+  <div class="setup-card">
+    <div class="s-logo">SENTI<span>NEL</span></div>
+    <div class="s-tag">TV DISPLAY · CCTV MONITOR</div>
+
+```
+<div class="s-id-box">
+  <div class="s-id-lbl">THIS TV'S DISPLAY ID — SHARE WITH YOUR PHONE</div>
+  <div class="s-id" id="tvId"><span class="spin"></span> Connecting to relay…</div>
+  <div class="s-id-hint">📱 Open sentinel-cam.html on your phone → enter this ID to start streaming to this TV</div>
+</div>
+
+<div class="s-div">OR MANUALLY ENTER CAMERA ID</div>
+
+<div class="s-row">
+  <input class="s-input" id="camIn" placeholder="Paste Camera ID from your phone…" autocomplete="off">
+  <button class="s-btn" onclick="connectCam()">CONNECT</button>
+</div>
+
+<p class="s-hint">
+  On your phone: open <strong>sentinel-cam.html</strong> in Chrome/Safari →
+  tap <strong>START</strong> → copy the Camera ID shown at the bottom →
+  paste it above and tap Connect.<br><br>
+  You can connect <strong>up to 4 phones</strong> as cameras. Connect them one at a time.
+</p>
+<div class="s-status" id="sStatus"><span class="spin"></span> Initialising peer connection…</div>
+```
+
+  </div>
+</div>
+
+<!-- MAIN UI -->
+
+<header class="hdr">
+  <div class="hdr-logo">
+    <div class="logo-hex"></div>
+    <div class="logo-words">
+      <div class="logo-main">SENTI<span>NEL</span></div>
+      <div class="logo-sub">TV · CCTV MONITOR</div>
+    </div>
+  </div>
+  <div class="hdr-stats">
+    <div class="hdr-stat">
+      <div class="hdr-stat-n" id="stCams">0</div>
+      <div class="hdr-stat-l">CAMERAS</div>
+    </div>
+    <div class="hdr-div"></div>
+    <div class="hdr-stat">
+      <div class="hdr-stat-n red" id="stPersons">0</div>
+      <div class="hdr-stat-l">PERSONS</div>
+    </div>
+    <div class="hdr-div"></div>
+    <div class="hdr-stat">
+      <div class="hdr-stat-n" id="stMotion">0</div>
+      <div class="hdr-stat-l">MOTION</div>
+    </div>
+    <div class="hdr-div"></div>
+    <div class="hdr-stat">
+      <div class="hdr-stat-n" id="stUptime">00:00</div>
+      <div class="hdr-stat-l">UPTIME</div>
+    </div>
+  </div>
+  <div class="hdr-right">
+    <div class="spill" id="livePill"><div class="dot"></div><span id="liveLabel">WAITING</span></div>
+    <div class="clk" id="clk">--:--:--</div>
+  </div>
+</header>
+
+<!-- FEEDS -->
+
+<div class="feeds l1" id="feeds">
+  <!-- injected dynamically -->
+</div>
+
+<!-- FOOTER -->
+
+<footer class="ftr">
+  <div class="ftr-id">
+    <div class="ftr-id-lbl">TV DISPLAY ID</div>
+    <div class="ftr-id-val" id="ftrId">—</div>
+  </div>
+
+  <div class="ftr-events" id="ftrEvents"></div>
+
+  <div class="ftr-right">
+    <!-- Layout buttons -->
+    <button class="lbtn on" id="lb1" onclick="setLayout(1)" title="Single">
+      <svg viewBox="0 0 20 16" width="20"><rect x="1" y="1" width="18" height="14" rx="1"/></svg>
+    </button>
+    <button class="lbtn" id="lb2" onclick="setLayout(2)" title="2-up">
+      <svg viewBox="0 0 20 16" width="20"><rect x="1" y="1" width="8" height="14" rx="1"/><rect x="11" y="1" width="8" height="14" rx="1"/></svg>
+    </button>
+    <button class="lbtn" id="lb4" onclick="setLayout(4)" title="4-up">
+      <svg viewBox="0 0 20 16" width="20"><rect x="1" y="1" width="8" height="6" rx="1"/><rect x="11" y="1" width="8" height="6" rx="1"/><rect x="1" y="9" width="8" height="6" rx="1"/><rect x="11" y="9" width="8" height="6" rx="1"/></svg>
+    </button>
+    <button class="lbtn" id="lbpip" onclick="setLayout('pip')" title="PiP">
+      <svg viewBox="0 0 20 16" width="20"><rect x="1" y="1" width="18" height="14" rx="1"/><rect x="11" y="8" width="7" height="5" rx="1" fill="var(--bg)"/></svg>
+    </button>
+    <button class="lbtn" id="lbadd" onclick="addMoreCam()" title="Add camera" style="border-color:var(--accent3);">
+      <svg viewBox="0 0 20 20" width="20" fill="var(--accent3)"><path d="M10 4v12M4 10h12" stroke="var(--accent3)" stroke-width="2.5" stroke-linecap="round"/></svg>
+    </button>
+  </div>
+</footer>
+
+<!-- ALERT BANNER -->
+
+<div class="alert-wrap">
+  <div class="abanner" id="abanner"></div>
+</div>
+
+<!-- Hidden canvases for motion detection -->
+
+<canvas id="mcanvas"></canvas>
+
+<script>
+// ── STATE ──
+const TV = {
+  peer: null, myId: null,
+  cams: [], // {id, stream, label, el, prevFrame, lastMotion, lastPerson}
+  motionEvt: 0, personEvt: 0,
+  startTime: null, uptimeIv: null,
+  alertT: null, layout: 1,
+  motionOn: true,
+  animId: null,
+};
+
+// ── CLOCK ──
+setInterval(()=>{
+  const t = new Date().toLocaleTimeString('en-GB');
+  document.getElementById('clk').textContent = t;
+  // update per-cam timestamps
+  TV.cams.forEach(c=>{ const el=document.getElementById(`cts-${c.id}`); if(el) el.textContent=t; });
+}, 1000);
+
+// ── UPTIME ──
+function startUptime() {
+  TV.startTime = Date.now();
+  TV.uptimeIv = setInterval(()=>{
+    const s = Math.floor((Date.now()-TV.startTime)/1000);
+    document.getElementById('stUptime').textContent =
+      `${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;
+  }, 1000);
+}
+
+// ── PEER ──
+function initPeer() {
+  TV.peer = new Peer({ debug: 0 });
+  TV.peer.on('open', id => {
+    TV.myId = id;
+    document.getElementById('tvId').textContent = id;
+    document.getElementById('ftrId').textContent = id.slice(0,20)+'…';
+    setStatus('ok', '✓ Ready — waiting for camera connections');
+  });
+
+  // Camera phones calling us
+  TV.peer.on('call', call => {
+    call.answer(); // no local stream to send back
+    call.on('stream', stream => {
+      const label = `CAM-${TV.cams.length+1}`;
+      addCamCell(call.peer, stream, label);
+      setStatus('ok', `✓ ${label} connected`);
+      ftrEvent('sys', `📡 ${label} connected`);
+    });
+    call.on('close', ()=>removeCam(call.peer));
+    call.on('error', ()=>removeCam(call.peer));
+  });
+
+  TV.peer.on('error', e => {
+    setStatus('err', `Connection error: ${e.message}`);
+  });
+}
+
+// ── CONNECT A CAM MANUALLY ──
+function connectCam() {
+  const id = document.getElementById('camIn').value.trim();
+  if (!id) return;
+  document.getElementById('camIn').value = '';
+  setStatus('', `Connecting to ${id.slice(0,10)}…`);
+
+  const call = TV.peer.call(id, new MediaStream());
+  if (!call) { setStatus('err','Could not reach that Camera ID'); return; }
+
+  call.on('stream', stream => {
+    const label = `CAM-${TV.cams.length+1}`;
+    addCamCell(id, stream, label);
+    setStatus('ok', `✓ ${label} connected`);
+    ftrEvent('sys', `📡 ${label} connected`);
+    // hide setup if we have at least one cam
+    if (TV.cams.length >= 1) document.getElementById('setup').classList.add('gone');
+  });
+  call.on('error', ()=>{ setStatus('err','Connection failed — check Camera ID'); });
+}
+
+function addMoreCam() {
+  // Show the input area briefly
+  const setup = document.getElementById('setup');
+  setup.classList.remove('gone');
+  document.getElementById('camIn').focus();
+}
+
+// ── BUILD CAM CELL ──
+function addCamCell(id, stream, label) {
+  const grid = document.getElementById('feeds');
+
+  const cell = document.createElement('div');
+  cell.className = 'cam';
+  cell.id = `cam-${id}`;
+  cell.innerHTML = `
+    <video id="vid-${id}" autoplay muted playsinline></video>
+    <div class="cam-hud">
+      <div class="cc tl"></div><div class="cc tr"></div>
+      <div class="cc bl"></div><div class="cc br"></div>
+      <div class="cam-live"><div class="ld"></div>LIVE</div>
+      <div class="cam-lbl">${label}</div>
+      <div class="cam-ts" id="cts-${id}">${new Date().toLocaleTimeString('en-GB')}</div>
+    </div>
+    <div class="mfl" id="mfl-${id}"></div>
+    <div class="pfl" id="pfl-${id}"></div>
+    <div class="motion-indicator" id="mbar-${id}"></div>
+  `;
+  grid.appendChild(cell);
+
+  const vid = document.getElementById(`vid-${id}`);
+  vid.srcObject = stream;
+
+  TV.cams.push({
+    id, stream, label,
+    el: {
+      vid, cell,
+      mfl: document.getElementById(`mfl-${id}`),
+      pfl: document.getElementById(`pfl-${id}`),
+      mbar: document.getElementById(`mbar-${id}`),
+    },
+    prevFrame: null,
+    lastMotion: 0, lastPerson: 0,
+  });
+
+  if (!TV.startTime) startUptime();
+  updateLayout();
+  updateStats();
+
+  // hide setup once first cam connects
+  document.getElementById('setup').classList.add('gone');
+
+  // start motion loop if not running
+  if (!TV.animId) startMotionLoop();
+}
+
+function removeCam(id) {
+  const i = TV.cams.findIndex(c=>c.id===id);
+  if (i===-1) return;
+  TV.cams.splice(i,1);
+  const el = document.getElementById(`cam-${id}`);
+  if (el) el.remove();
+  updateLayout();
+  updateStats();
+  ftrEvent('sys', `⭕ Camera disconnected`);
+}
+
+// ── LAYOUT ──
+function setLayout(n) {
+  TV.layout = n;
+  ['lb1','lb2','lb4','lbpip'].forEach(id=>document.getElementById(id).classList.remove('on'));
+  const map={1:'lb1',2:'lb2',4:'lb4',pip:'lbpip'};
+  if(map[n]) document.getElementById(map[n]).classList.add('on');
+  updateLayout();
+}
+
+function updateLayout() {
+  const grid = document.getElementById('feeds');
+  const n = TV.cams.length;
+  const l = TV.layout;
+
+  // auto-pick layout if only 1 or 2 cams
+  if (n===1) { grid.className='feeds l1'; return; }
+  if (n===2 && l===1) { grid.className='feeds l2'; return; }
+
+  const cls = l==='pip'?'lpip':l===4||n===4?'l4':l===2||n===2?'l2':n===3?'l3':'l1';
+  grid.className = `feeds ${cls}`;
+}
+
+// ── MOTION DETECTION (lightweight — no AI) ──
+function startMotionLoop() {
+  const mc = document.getElementById('mcanvas');
+  const mctx = mc.getContext('2d');
+
+  function loop() {
+    TV.cams.forEach(cam => {
+      const vid = cam.el.vid;
+      if (!vid || vid.readyState < 2) return;
+      const W = vid.videoWidth, H = vid.videoHeight;
+      if (!W || !H) return;
+
+      mc.width = W; mc.height = H;
+      mctx.drawImage(vid, 0, 0, W, H);
+      const frame = mctx.getImageData(0, 0, W, H);
+
+      if (cam.prevFrame && TV.motionOn) {
+        const score = diffFrames(cam.prevFrame, frame);
+        const threshold = 18;
+
+        if (score > threshold) {
+          // Show motion bar
+          cam.el.mbar.classList.add('active');
+          setTimeout(()=>cam.el.mbar.classList.remove('active'), 800);
+
+          const now = Date.now();
+          if (now - cam.lastMotion > 3500) {
+            cam.lastMotion = now;
+            TV.motionEvt++;
+            document.getElementById('stMotion').textContent = TV.motionEvt;
+            flashEl(cam.el.mfl);
+            cam.el.cell.classList.add('alerted');
+            setTimeout(()=>cam.el.cell.classList.remove('alerted'), 3000);
+            showAlert(`⚡ MOTION — ${cam.label}`);
+            ftrEvent('motion', `📡 Motion · ${cam.label}`);
+          }
+        }
+      }
+      cam.prevFrame = frame;
+    });
+
+    TV.animId = requestAnimationFrame(loop);
+  }
+  loop();
+}
+
+function diffFrames(a, b) {
+  let d=0, n=0;
+  for(let i=0; i<a.data.length; i+=20) {
+    const dr=Math.abs(a.data[i]-b.data[i]);
+    const dg=Math.abs(a.data[i+1]-b.data[i+1]);
+    const db=Math.abs(a.data[i+2]-b.data[i+2]);
+    if ((dr+dg+db)/3 > 22) d++;
+    n++;
+  }
+  return (d/n)*100;
+}
+
+// ── PERSON ALERTS FROM CAM APP ──
+// TV listens for data channel messages from cam peers for person events
+TV.onPersonAlert = function(camLabel) {
+  const now = Date.now();
+  TV.personEvt++;
+  document.getElementById('stPersons').textContent = TV.personEvt;
+  showAlert(`🚨 PERSON DETECTED — ${camLabel}`);
+  ftrEvent('person', `🚨 Person · ${camLabel}`);
+  // flash all cells matching label
+  const cam = TV.cams.find(c=>c.label===camLabel);
+  if (cam) { flashEl(cam.el.pfl); cam.el.cell.classList.add('alerted'); setTimeout(()=>cam.el.cell.classList.remove('alerted'),3000); }
+};
+
+// ── HELPERS ──
+function flashEl(el) { el.classList.add('on'); setTimeout(()=>el.classList.remove('on'), 300); }
+
+function showAlert(msg) {
+  const b = document.getElementById('abanner');
+  b.textContent = msg; b.classList.add('show');
+  clearTimeout(TV.alertT);
+  TV.alertT = setTimeout(()=>b.classList.remove('show'), 5000);
+}
+
+function ftrEvent(type, msg) {
+  const bar = document.getElementById('ftrEvents');
+  const d = document.createElement('div');
+  d.className = `fev ${type}`;
+  d.textContent = msg;
+  bar.insertBefore(d, bar.firstChild);
+  while (bar.children.length > 5) bar.removeChild(bar.lastChild);
+}
+
+function updateStats() {
+  document.getElementById('stCams').textContent = TV.cams.length;
+  const pill = document.getElementById('livePill');
+  const lbl = document.getElementById('liveLabel');
+  if (TV.cams.length > 0) {
+    pill.classList.add('live');
+    lbl.textContent = `${TV.cams.length} LIVE`;
+  } else {
+    pill.classList.remove('live');
+    lbl.textContent = 'WAITING';
+  }
+}
+
+function setStatus(cls, msg) {
+  const el = document.getElementById('sStatus');
+  el.className = `s-status${cls?' '+cls:''}`;
+  el.textContent = msg;
+}
+
+// ── KEYBOARD / REMOTE NAV ──
+document.addEventListener('keydown', e => {
+  switch(e.key) {
+    case '1': setLayout(1); break;
+    case '2': setLayout(2); break;
+    case '4': setLayout(4); break;
+    case 'p': case 'P': setLayout('pip'); break;
+    case 'a': case 'A': addMoreCam(); break;
+    case 'Escape': document.getElementById('setup').classList.add('gone'); break;
+    case 'm': case 'M': TV.motionOn=!TV.motionOn; break;
+  }
+});
+
+// ── INIT ──
+initPeer();
+</script>
+
+</body>
+</html>
