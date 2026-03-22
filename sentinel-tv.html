@@ -202,6 +202,16 @@ color:var(–dim);min-height:28px;padding:6px;
 .s-status.ok{color:var(–accent3);}
 .s-status.err{color:var(–accent2);}
 
+/* PIN display — large spaced digits */
+.s-tv-id{display:flex;align-items:center;justify-content:center;gap:6px;flex-wrap:wrap;min-height:72px;}
+.pin-prefix{font-family:var(–orb);font-size:32px;font-weight:700;color:var(–dim);letter-spacing:2px;}
+.pin-digit{
+font-family:var(–orb);font-size:64px;font-weight:900;color:var(–accent);
+line-height:1;text-shadow:0 0 30px rgba(0,212,255,.6);
+background:rgba(0,212,255,.06);border:1px solid rgba(0,212,255,.2);
+border-radius:8px;padding:4px 14px;min-width:70px;text-align:center;
+}
+
 .spin{display:inline-block;width:10px;height:10px;border:2px solid var(–border);border-top-color:var(–accent);border-radius:50%;animation:rot .7s linear infinite;margin-right:6px;vertical-align:middle;}
 @keyframes rot{to{transform:rotate(360deg)}}
 #mcanvas{display:none;}
@@ -220,25 +230,25 @@ color:var(–dim);min-height:28px;padding:6px;
 ```
 <div class="s-cols">
 
-  <!-- LEFT: Recommended — phone connects to TV -->
+  <!-- LEFT: PIN — type this on phone -->
   <div class="s-left">
-    <div class="s-box-label">⭐ EASIEST — YOUR TV'S ID</div>
+    <div class="s-box-label">⭐ TYPE THIS ON YOUR PHONE</div>
     <div class="s-tv-id-box">
-      <div class="s-tv-id" id="tvId"><span class="spin"></span> Connecting…</div>
+      <div class="s-tv-id" id="tvPinDisplay"><span class="spin"></span></div>
+      <div style="font-size:10px;color:var(--dim);margin-top:10px;letter-spacing:1px;">Only 8 characters — easy to enter</div>
     </div>
     <div class="s-step">
-      <span>Step 1</span> — On your phone, open <strong>sentinel-cam.html</strong><br>
+      <span>Step 1</span> — On your phone open <strong>sentinel-cam.html</strong><br>
       <span>Step 2</span> — Tap <strong>START CAMERA</strong><br>
-      <span>Step 3</span> — In the Stream field, type/paste the ID above<br>
+      <span>Step 3</span> — In the Stream field enter the PIN above<br>
       <span>Step 4</span> — Tap <strong>STREAM →</strong><br><br>
-      ✅ Camera appears on this TV instantly.<br>
-      No typing on TV needed at all.
+      ✅ Your camera appears on the TV instantly.
     </div>
   </div>
 
-  <!-- RIGHT: Fallback — type camera ID on TV -->
+  <!-- RIGHT: on-screen keyboard if needed -->
   <div class="s-right">
-    <div class="s-box-label">ALTERNATIVE — TYPE CAMERA ID HERE</div>
+    <div class="s-box-label">OR ENTER A CAMERA PIN HERE</div>
 
     <div class="kbd-out" id="kbdOut">
       <div class="kbd-chars" id="kbdChars"></div>
@@ -247,6 +257,10 @@ color:var(–dim);min-height:28px;padding:6px;
 
     <div class="kbd-rows">
       <div class="krow">
+        <button class="k" onclick="kt('S')">S</button>
+        <button class="k" onclick="kt('N')">N</button>
+        <button class="k" onclick="kt('T')">T</button>
+        <button class="k" onclick="kt('-')">-</button>
         <button class="k" onclick="kt('1')">1</button>
         <button class="k" onclick="kt('2')">2</button>
         <button class="k" onclick="kt('3')">3</button>
@@ -257,47 +271,17 @@ color:var(–dim);min-height:28px;padding:6px;
         <button class="k" onclick="kt('8')">8</button>
         <button class="k" onclick="kt('9')">9</button>
         <button class="k" onclick="kt('0')">0</button>
-        <button class="k" onclick="kt('-')">-</button>
-      </div>
-      <div class="krow">
-        <button class="k" onclick="kt('a')">a</button>
-        <button class="k" onclick="kt('b')">b</button>
-        <button class="k" onclick="kt('c')">c</button>
-        <button class="k" onclick="kt('d')">d</button>
-        <button class="k" onclick="kt('e')">e</button>
-        <button class="k" onclick="kt('f')">f</button>
-        <button class="k" onclick="kt('g')">g</button>
-        <button class="k" onclick="kt('h')">h</button>
-        <button class="k" onclick="kt('i')">i</button>
-        <button class="k" onclick="kt('j')">j</button>
         <button class="k del" onclick="kb()">⌫</button>
-      </div>
-      <div class="krow">
-        <button class="k" onclick="kt('k')">k</button>
-        <button class="k" onclick="kt('l')">l</button>
-        <button class="k" onclick="kt('m')">m</button>
-        <button class="k" onclick="kt('n')">n</button>
-        <button class="k" onclick="kt('o')">o</button>
-        <button class="k" onclick="kt('p')">p</button>
-        <button class="k" onclick="kt('q')">q</button>
-        <button class="k" onclick="kt('r')">r</button>
-        <button class="k" onclick="kt('s')">s</button>
-        <button class="k" onclick="kt('t')">t</button>
-        <button class="k clr" onclick="kc()">CLR</button>
-      </div>
-      <div class="krow">
-        <button class="k" onclick="kt('u')">u</button>
-        <button class="k" onclick="kt('v')">v</button>
-        <button class="k" onclick="kt('w')">w</button>
-        <button class="k" onclick="kt('x')">x</button>
-        <button class="k" onclick="kt('y')">y</button>
-        <button class="k" onclick="kt('z')">z</button>
       </div>
       <button class="k go" onclick="connectCam()">▶ CONNECT</button>
     </div>
+    <p style="font-size:10px;color:var(--dim);margin-top:10px;letter-spacing:1px;line-height:1.7">
+      Camera PINs also look like <strong style="color:var(--text)">SNT-1234</strong>.<br>
+      Type it above and press CONNECT.
+    </p>
   </div>
 
-</div><!-- end s-cols -->
+</div>
 
 <div class="s-status" id="sStatus"><span class="spin"></span> Initialising…</div>
 ```
@@ -391,8 +375,8 @@ color:var(–dim);min-height:28px;padding:6px;
 <script>
 // ── STATE ──
 const TV = {
-  peer: null, myId: null,
-  cams: [], // {id, stream, label, el, prevFrame, lastMotion, lastPerson}
+  peer: null, myId: null, shortPin: null,
+  cams: [],
   motionEvt: 0, personEvt: 0,
   startTime: null, uptimeIv: null,
   alertT: null, layout: 1,
@@ -404,7 +388,6 @@ const TV = {
 setInterval(()=>{
   const t = new Date().toLocaleTimeString('en-GB');
   document.getElementById('clk').textContent = t;
-  // update per-cam timestamps
   TV.cams.forEach(c=>{ const el=document.getElementById(`cts-${c.id}`); if(el) el.textContent=t; });
 }, 1000);
 
@@ -418,19 +401,35 @@ function startUptime() {
   }, 1000);
 }
 
-// ── PEER ──
+// ── PEER — short PIN ID ──
+function genPin() {
+  // 4-digit PIN, retried until peer accepts it
+  return 'SNT-' + Math.floor(1000 + Math.random() * 9000);
+}
+
 function initPeer() {
-  TV.peer = new Peer({ debug: 0 });
+  const pin = genPin();
+  TV.peer = new Peer(pin, { debug: 0 });
+
   TV.peer.on('open', id => {
     TV.myId = id;
-    document.getElementById('tvId').textContent = id;
-    document.getElementById('ftrId').textContent = id.slice(0,20)+'…';
-    setStatus('ok', '✓ Ready — waiting for camera connections');
+    TV.shortPin = id; // e.g. SNT-7342
+    showPin(id);
+    setStatus('ok', '✓ Ready — share the PIN with your phone');
   });
 
-  // Camera phones calling us
+  TV.peer.on('error', e => {
+    if (e.type === 'unavailable-id') {
+      // PIN taken, try another
+      TV.peer.destroy();
+      initPeer();
+    } else {
+      setStatus('err', `Error: ${e.message}`);
+    }
+  });
+
   TV.peer.on('call', call => {
-    call.answer(); // no local stream to send back
+    call.answer();
     call.on('stream', stream => {
       const label = `CAM-${TV.cams.length+1}`;
       addCamCell(call.peer, stream, label);
@@ -440,17 +439,22 @@ function initPeer() {
     call.on('close', ()=>removeCam(call.peer));
     call.on('error', ()=>removeCam(call.peer));
   });
+}
 
-  TV.peer.on('error', e => {
-    setStatus('err', `Connection error: ${e.message}`);
-  });
+function showPin(pin) {
+  // Display as big spaced digits e.g.  SNT-7342
+  const digits = pin.replace('SNT-','');
+  document.getElementById('tvPinDisplay').innerHTML =
+    `<span class="pin-prefix">SNT-</span>` +
+    digits.split('').map(d=>`<span class="pin-digit">${d}</span>`).join('');
+  document.getElementById('ftrId').textContent = pin;
 }
 
 // ── ON-SCREEN KEYBOARD ──
 let kbdVal = '';
 
 function kt(ch) {    // type a character
-  kbdVal += ch;
+  kbdVal += ch.toUpperCase();
   refreshKbd();
 }
 function kb() {      // backspace
@@ -471,9 +475,9 @@ function refreshKbd() {
 // ── CONNECT A CAM ──
 function connectCam() {
   const id = kbdVal.trim();
-  if (!id) { setStatus('err', 'Please type a Camera ID first'); return; }
+  if (!id) { setStatus('err', 'Type a Camera ID first using the keyboard →'); return; }
   setStatus('', `Connecting to ${id.slice(0,10)}…`);
-  kbdClear();
+  kc();
 
   const call = TV.peer.call(id, new MediaStream());
   if (!call) { setStatus('err','Could not reach that Camera ID'); return; }
