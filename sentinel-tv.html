@@ -427,9 +427,6 @@ function addCamCell(id, stream, label) {
   div.className = 'cam'; div.id = `cam-${id}`;
   div.innerHTML = `
     <video id="v-${id}" autoplay muted playsinline webkit-playsinline x-webkit-airplay="allow"></video>
-    <button class="tap-play" id="tp-${id}" onclick="tapPlay('${id}')">
-      <div class="tap-play-btn">▶</div>
-    </button>
     <div class="cam-live"><div class="d"></div>LIVE</div>
     <div class="cam-label">${label}</div>
     <div class="cc tl"></div><div class="cc tr"></div>
@@ -438,72 +435,40 @@ function addCamCell(id, stream, label) {
   feeds.appendChild(div);
 
   const vid = document.getElementById(`v-${id}`);
-
-  // Google TV requires: set srcObject BEFORE attaching event listeners,
-  // then force muted, then call play() repeatedly until it succeeds
   vid.muted = true;
   vid.volume = 0;
   vid.srcObject = stream;
 
-  let playAttempts = 0;
+  // Aggressive play loop — keeps retrying until video plays
+  let attempts = 0;
   function tryPlay() {
     vid.muted = true;
     vid.volume = 0;
-    const p = vid.play();
-    if (p !== undefined) {
-      p.then(() => {
-        // Success — hide tap overlay
-        const tp = document.getElementById(`tp-${id}`);
-        if (tp) tp.classList.add('hidden');
-      }).catch(err => {
-        playAttempts++;
-        if (playAttempts < 20) {
-          setTimeout(tryPlay, 500);
-        }
-      });
-    }
+    vid.play().catch(() => {
+      if (++attempts < 30) setTimeout(tryPlay, 600);
+    });
   }
 
   vid.addEventListener('loadedmetadata', tryPlay);
   vid.addEventListener('canplay', tryPlay);
-  vid.addEventListener('loadeddata', tryPlay);
-
-  // Call immediately too
-  setTimeout(tryPlay, 100);
-  setTimeout(tryPlay, 500);
-  setTimeout(tryPlay, 1000);
-  setTimeout(tryPlay, 2000);
+  tryPlay();
+  setTimeout(tryPlay, 300);
+  setTimeout(tryPlay, 800);
+  setTimeout(tryPlay, 1500);
   setTimeout(tryPlay, 3000);
 
-  // Watchdog: check every 2s — if paused but has data, force play
+  // Watchdog: every 2s force-play if paused
   const wd = setInterval(() => {
-    const el = document.getElementById(`v-${id}`);
-    if (!el) { clearInterval(wd); return; }
-    if (vid.readyState >= 2) {
-      if (vid.paused) {
-        vid.muted = true;
-        vid.volume = 0;
-        vid.play().catch(() => {});
-      }
-    }
-    // If srcObject got lost, reattach
-    if (!vid.srcObject) {
-      vid.srcObject = stream;
-      vid.muted = true;
-      vid.play().catch(() => {});
-    }
+    if (!document.getElementById(`v-${id}`)) { clearInterval(wd); return; }
+    vid.muted = true;
+    if (!vid.srcObject) vid.srcObject = stream;
+    if (vid.paused) vid.play().catch(() => {});
   }, 2000);
 
   T.cams.push({ id, stream, label, vid, mfl: document.getElementById(`mf-${id}`), prevFrame:null, lastMotion:0 });
   if (!T.startTime) { T.startTime = Date.now(); startUptime(); }
   updateFeedsLayout();
   if (!T.animId) motionLoop();
-
-  // Auto-focus the play button so TV remote OK button works immediately
-  setTimeout(() => {
-    const tp = document.getElementById(`tp-${id}`);
-    if (tp && !tp.classList.contains('hidden')) tp.focus();
-  }, 500);
 }
 
 function removeCamCell(id) {
