@@ -34,13 +34,15 @@ transform:translateZ(0); -webkit-transform:translateZ(0);
 .tap-play {
 position:absolute; inset:0; z-index:10;
 display:flex; align-items:center; justify-content:center;
-background:rgba(0,0,0,.5); cursor:pointer;
+background:rgba(0,0,0,.4); cursor:pointer;
+border:none; width:100%; padding:0;
 }
+.tap-play:focus { outline:4px solid #00e5ff; }
 .tap-play-btn {
-width:80px; height:80px; border-radius:50%;
-background:rgba(0,229,255,.2); border:3px solid #00e5ff;
+width:90px; height:90px; border-radius:50%;
+background:rgba(0,229,255,.25); border:3px solid #00e5ff;
 display:flex; align-items:center; justify-content:center;
-font-size:32px;
+font-size:38px; pointer-events:none;
 }
 .tap-play.hidden { display:none; }
 .cam-label {
@@ -425,9 +427,9 @@ function addCamCell(id, stream, label) {
   div.className = 'cam'; div.id = `cam-${id}`;
   div.innerHTML = `
     <video id="v-${id}" autoplay muted playsinline webkit-playsinline x-webkit-airplay="allow"></video>
-    <div class="tap-play" id="tp-${id}" onclick="tapPlay('${id}')">
+    <button class="tap-play" id="tp-${id}" onclick="tapPlay('${id}')">
       <div class="tap-play-btn">▶</div>
-    </div>
+    </button>
     <div class="cam-live"><div class="d"></div>LIVE</div>
     <div class="cam-label">${label}</div>
     <div class="cc tl"></div><div class="cc tr"></div>
@@ -496,6 +498,12 @@ function addCamCell(id, stream, label) {
   if (!T.startTime) { T.startTime = Date.now(); startUptime(); }
   updateFeedsLayout();
   if (!T.animId) motionLoop();
+
+  // Auto-focus the play button so TV remote OK button works immediately
+  setTimeout(() => {
+    const tp = document.getElementById(`tp-${id}`);
+    if (tp && !tp.classList.contains('hidden')) tp.focus();
+  }, 500);
 }
 
 function removeCamCell(id) {
@@ -591,8 +599,42 @@ setInterval(() => {
   // nothing needed — kept simple
 }, 1000);
 
-// ── Key nav ──
+// ── GO ──
+init();
+
+// ── Tap to play (Google TV gesture unlock) ──
+function tapPlay(id) {
+  const vid = document.getElementById(`v-${id}`);
+  const tp = document.getElementById(`tp-${id}`);
+  if (!vid) return;
+  vid.muted = true;
+  vid.volume = 0;
+  vid.play().then(() => {
+    if (tp) tp.classList.add('hidden');
+  }).catch(() => {});
+  // Also play all other paused videos
+  playAllVideos();
+}
+
+function playAllVideos() {
+  T.cams.forEach(cam => {
+    if (cam.vid && cam.vid.paused) {
+      cam.vid.muted = true;
+      cam.vid.volume = 0;
+      cam.vid.play().then(() => {
+        const tp = document.getElementById(`tp-${cam.id}`);
+        if (tp) tp.classList.add('hidden');
+      }).catch(() => {});
+    }
+  });
+}
+
+// ── Unlock all videos on any user interaction ──
+document.addEventListener('click', playAllVideos, { passive: true });
 document.addEventListener('keydown', e => {
+  // First: try to play all videos on ANY key (TV remote gesture unlock)
+  playAllVideos();
+
   const setupHidden = document.getElementById('setup').classList.contains('hidden');
   if (!setupHidden) {
     if (/^[SNT0-9\-]$/i.test(e.key)) { kt(e.key); return; }
@@ -606,35 +648,6 @@ document.addEventListener('keydown', e => {
     if (e.key === 'a' || e.key === 'A') document.getElementById('setup').classList.remove('hidden');
   }
 });
-
-// ── Tap to play (Google TV gesture unlock) ──
-function tapPlay(id) {
-  const vid = document.getElementById(`v-${id}`);
-  const tp = document.getElementById(`tp-${id}`);
-  if (!vid) return;
-  vid.muted = true;
-  vid.volume = 0;
-  vid.play().then(() => {
-    if (tp) tp.classList.add('hidden');
-  }).catch(() => {});
-}
-
-// ── Unlock all videos on any user interaction ──
-// Google TV requires a user gesture before playing video
-document.addEventListener('click', () => {
-  T.cams.forEach(cam => {
-    if (cam.vid && cam.vid.paused) {
-      cam.vid.muted = true;
-      cam.vid.play().then(() => {
-        const tp = document.getElementById(`tp-${cam.id}`);
-        if (tp) tp.classList.add('hidden');
-      }).catch(() => {});
-    }
-  });
-}, { once: false });
-
-// ── GO ──
-init();
 </script>
 
 </body>
